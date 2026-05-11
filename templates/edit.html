@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}แก้ไขคำขอ — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h4 class="fw-bold mb-0"><i class="bi bi-pencil-square me-2 text-warning"></i>แก้ไขคำขอ</h4>
+          <span class="text-muted small">#{{ req.id }}</span>
+        </div>
+        <p class="text-muted small mb-3">แก้ไขหรือเพิ่มเติมข้อมูลคำขอได้ที่นี่</p>
+        <div class="alert alert-warning py-2 small mb-4">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>
+          หากแก้ไข<strong>จำนวนเงิน</strong> หรือรายการที่ <strong>เสร็จแล้ว</strong> — สถานะจะเปลี่ยนกลับเป็น <strong>รอดำเนินการ</strong> อัตโนมัติ
+        </div>
+
+        <form method="POST" action="/edit/{{ req.id }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">ชื่อผู้ส่งคำขอ <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ req.name }}" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">รายละเอียดคำขอ <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="4" required>{{ req.description }}</textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">ประเภทงาน</label>
+            <div class="d-flex gap-3 flex-wrap">
+              {% for wt in work_types %}
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="work_type"
+                       id="wt-{{ wt }}" value="{{ wt }}"
+                       {% if req.work_type == wt %}checked{% endif %} />
+                <label class="form-check-label fw-semibold" for="wt-{{ wt }}">
+                  {% if wt == 'IT' %}<i class="bi bi-pc-display me-1 text-info"></i>
+                  {% elif wt == 'OFFICE' %}<i class="bi bi-building me-1 text-warning"></i>
+                  {% else %}<i class="bi bi-three-dots me-1 text-secondary"></i>
+                  {% endif %}{{ wt }}
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">จำนวนเงินที่คาดว่าจะจ่าย (บาท)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-currency-exchange"></i></span>
+              <input type="text" name="amount" id="amount" class="form-control"
+                     inputmode="decimal" autocomplete="off"
+                     value="{{ req.amount | fmt_amount if req.amount not in ('', none) else '' }}"
+                     placeholder="ระบุจำนวนเงิน (ถ้ามี)" />
+              <span class="input-group-text">บาท</span>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">ระดับความเร่งด่วน</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="urgency" id="u-low" value="ต่ำ"
+                       {% if req.urgency == 'ต่ำ' %}checked{% endif %} />
+                <label class="form-check-label text-success fw-semibold" for="u-low">ต่ำ</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="urgency" id="u-mid" value="ปานกลาง"
+                       {% if req.urgency == 'ปานกลาง' %}checked{% endif %} />
+                <label class="form-check-label text-warning fw-semibold" for="u-mid">ปานกลาง</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="urgency" id="u-high" value="สูง"
+                       {% if req.urgency == 'สูง' %}checked{% endif %} />
+                <label class="form-check-label text-danger fw-semibold" for="u-high">สูง</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="/" class="btn btn-outline-secondary w-50">ยกเลิก</a>
+            <button type="submit" class="btn btn-warning w-50 fw-semibold text-dark">
+              <i class="bi bi-save me-1"></i>บันทึกการแก้ไข
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>setupAmountInput(document.getElementById('amount'));</script>
+{% endblock %}

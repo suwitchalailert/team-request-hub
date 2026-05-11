@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Dashboard รายบุคคล — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>Dashboard รายบุคคล</h4>
+  <span class="text-muted small">ผู้ส่งคำขอทั้งหมด {{ persons | length }} คน</span>
+</div>
+
+{% if not persons %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+  ยังไม่มีคำขอ — <a href="/submit">ส่งคำขอแรก</a>
+</div>
+{% else %}
+
+<!-- Top 10 Bar Chart -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-3">
+        <h6 class="fw-bold text-muted mb-2">
+          <i class="bi bi-bar-chart-fill me-1"></i>Top 10 — จำนวนคำขอ
+        </h6>
+        <div id="wrapCount" style="position:relative;">
+          <canvas id="chartCount"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-3">
+        <h6 class="fw-bold text-muted mb-2">
+          <i class="bi bi-bar-chart-fill me-1"></i>Top 10 — ยอดเงิน (บาท)
+        </h6>
+        <div id="wrapAmount" style="position:relative;">
+          <canvas id="chartAmount"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search + Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body pb-0">
+    <div class="row g-2 align-items-center mb-3">
+      <div class="col">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                 placeholder="ค้นหาชื่อ..." autocomplete="off" />
+        </div>
+      </div>
+      <div class="col-auto text-muted small" id="resultCount"></div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="personTable">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3 sortable" data-col="name" style="cursor:pointer;">
+            ชื่อ <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
+          <th class="text-center sortable" data-col="total" style="cursor:pointer; width:90px;">
+            ทั้งหมด <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
+          <th class="text-center" style="width:90px;">รอ</th>
+          <th class="text-center" style="width:90px;">กำลังทำ</th>
+          <th class="text-center" style="width:90px;">เสร็จ</th>
+          <th class="text-center" style="width:90px;">ยกเลิก</th>
+          <th class="text-end sortable pe-3" data-col="amount" style="cursor:pointer; width:140px;">
+            ยอดเงิน <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
+        </tr>
+      </thead>
+      <tbody id="personBody">
+        {% for person in persons %}
+        <tr class="person-row"
+            data-name="{{ person.name }}"
+            data-total="{{ person.total }}"
+            data-amount="{{ person.total_amount }}">
+          <td class="ps-3">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                   style="width:32px;height:32px;font-size:0.85rem;">
+                {{ person.name[0] }}
+              </div>
+              <span class="fw-semibold">{{ person.name }}</span>
+            </div>
+          </td>
+          <td class="text-center fw-bold">{{ person.total }}</td>
+          <td class="text-center">
+            {% if person.pending %}
+            <span class="text-secondary fw-semibold">{{ person.pending }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td class="text-center">
+            {% if person.in_progress %}
+            <span class="text-primary fw-semibold">{{ person.in_progress }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td class="text-center">
+            {% if person.done %}
+            <span class="text-success fw-semibold">{{ person.done }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td class="text-center">
+            {% if person.cancelled %}
+            <span class="text-danger fw-semibold">{{ person.cancelled }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td class="text-end pe-3">
+            {% if person.total_amount > 0 %}
+            <span class="fw-semibold">{{ person.total_amount | fmt_amount }}</span>
+            <span class="text-muted small"> ฿</span>
+            {% else %}
+            <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer bg-white text-muted small py-2 px-3" id="noResult" style="display:none;">
+    ไม่พบชื่อที่ค้นหา
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if persons %}
+<script>
+(function () {
+  Chart.unregister(ChartDataLabels);
+
+  const allLabels  = [{% for p in persons %}"{{ p.name }}"{% if not loop.last %},{% endif %}{% endfor %}];
+  const allCounts  = [{% for p in persons %}{{ p.total }}{% if not loop.last %},{% endif %}{% endfor %}];
+  const allAmounts = [{% for p in persons %}{{ p.total_amount }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+  // Limit to Top 10
+  const top10Labels  = allLabels.slice(0, 10);
+  const top10Counts  = allCounts.slice(0, 10);
+  const top10Amounts = allAmounts.slice(0, 10);
+
+  const chartH = Math.max(160, top10Labels.length * 36);
+  document.getElementById('wrapCount').style.height  = chartH + 'px';
+  document.getElementById('wrapAmount').style.height = chartH + 'px';
+
+  const commonOpts = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, datalabels: { display: false } },
+    scales: {
+      x: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { precision: 0 } },
+      y: { ticks: { font: { size: 12 } } }
+    }
+  };
+
+  new Chart(document.getElementById('chartCount'), {
+    type: 'bar',
+    data: { labels: top10Labels, datasets: [{ data: top10Counts,
+      backgroundColor: 'rgba(78,121,167,0.8)', borderRadius: 4, borderSkipped: false }]},
+    options: { ...commonOpts, plugins: { ...commonOpts.plugins,
+      tooltip: { callbacks: { label: ctx => ` ${ctx.raw} รายการ` } }
+    }, scales: { ...commonOpts.scales, x: { ...commonOpts.scales.x, ticks: { stepSize: 1, precision: 0 } } }}
+  });
+
+  const hasAmount = top10Amounts.some(v => v > 0);
+  if (hasAmount) {
+    new Chart(document.getElementById('chartAmount'), {
+      type: 'bar',
+      data: { labels: top10Labels, datasets: [{ data: top10Amounts,
+        backgroundColor: 'rgba(242,142,43,0.8)', borderRadius: 4, borderSkipped: false }]},
+      options: { ...commonOpts, plugins: { ...commonOpts.plugins,
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toLocaleString('th-TH')} บาท` } }
+      }}
+    });
+  } else {
+    document.getElementById('wrapAmount').closest('.card').innerHTML =
+      '<div class="card-body d-flex align-items-center justify-content-center text-muted" style="min-height:160px;">' +
+      '<div class="text-center"><i class="bi bi-dash-circle fs-2 d-block mb-2"></i>ยังไม่มีข้อมูลจำนวนเงิน</div></div>';
+  }
+
+  // Search
+  const searchInput = document.getElementById('searchInput');
+  const rows        = document.querySelectorAll('.person-row');
+  const resultCount = document.getElementById('resultCount');
+  const noResult    = document.getElementById('noResult');
+
+  function updateCount() {
+    const visible = [...rows].filter(r => r.style.display !== 'none').length;
+    resultCount.textContent = `แสดง ${visible} จาก ${rows.length} คน`;
+    noResult.style.display = visible === 0 ? '' : 'none';
+  }
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    rows.forEach(row => {
+      row.style.display = row.dataset.name.toLowerCase().includes(q) ? '' : 'none';
+    });
+    updateCount();
+  });
+
+  updateCount();
+
+  // Sort
+  let sortCol = null, sortAsc = true;
+
+  document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      sortAsc = sortCol === col ? !sortAsc : true;
+      sortCol = col;
+
+      document.querySelectorAll('.sortable i').forEach(i => i.className = 'bi bi-chevron-expand text-muted small');
+      th.querySelector('i').className = `bi bi-chevron-${sortAsc ? 'up' : 'down'} text-primary small`;
+
+      const tbody = document.getElementById('personBody');
+      [...tbody.querySelectorAll('.person-row')]
+        .sort((a, b) => {
+          const av = col === 'name' ? a.dataset.name : parseFloat(a.dataset[col]);
+          const bv = col === 'name' ? b.dataset.name : parseFloat(b.dataset[col]);
+          if (av < bv) return sortAsc ? -1 : 1;
+          if (av > bv) return sortAsc ? 1  : -1;
+          return 0;
+        })
+        .forEach(row => tbody.appendChild(row));
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

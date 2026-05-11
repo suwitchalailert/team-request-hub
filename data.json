@@ -1,0 +1,145 @@
+[
+  {
+    "id": "46951ebb",
+    "name": "สมชาย แสนดี",
+    "description": "ขอซื้อ Mac Book 1 เครื่อง",
+    "urgency": "สูง",
+    "work_type": "IT",
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T10:38:41.164625",
+    "created_at_str": "11/05/2026 10:38",
+    "amount": 65000.0
+  },
+  {
+    "id": "61f84e1c",
+    "name": "สมหญิง แสนสวย",
+    "description": "ขอ License Power BI 1 License",
+    "urgency": "ปานกลาง",
+    "work_type": "IT",
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T10:40:41.719799",
+    "created_at_str": "11/05/2026 10:40",
+    "amount": 7000.0
+  },
+  {
+    "id": "2d205085",
+    "name": "แก้วใจ กลางดง",
+    "description": "ขอซื้อโต๊ะทำงาน 1 ตัว",
+    "urgency": "ปานกลาง",
+    "work_type": "OFFICE",
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T10:41:11.273166",
+    "created_at_str": "11/05/2026 10:41",
+    "amount": 2000.0
+  },
+  {
+    "id": "0199b4ff",
+    "name": "สมหวัง มาดี",
+    "description": "ขอซื้ออุปกรณ์ล้างรถ หลายรายการ เป็นเงิน 1000 บาท",
+    "urgency": "ต่ำ",
+    "work_type": "OTHER",
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T10:41:50.540510",
+    "created_at_str": "11/05/2026 10:41",
+    "amount": 1000.0
+  },
+  {
+    "id": "9f78d3aa",
+    "name": "สุขใจ ร่มเย็น",
+    "description": "ขอซื้อเก้าอี้ 1 ตัว",
+    "urgency": "ต่ำ",
+    "work_type": "OFFICE",
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T10:42:19.499926",
+    "created_at_str": "11/05/2026 10:42",
+    "amount": 3000.0
+  },
+  {
+    "id": "55017510",
+    "name": "สมชาย แสนดี",
+    "description": "ขอซื้อเก้าอี้ รับแขก 2 ตัว",
+    "urgency": "ต่ำ",
+    "work_type": "OFFICE",
+    "status": "ยกเลิก",
+    "created_at": "2026-05-11T10:42:51.442694",
+    "created_at_str": "11/05/2026 10:42",
+    "amount": 6000.0
+  },
+  {
+    "id": "49a20838",
+    "name": "น้ำใส ใจดี",
+    "description": "ขอเบิกค่าอาหารสำหรับดูแลเด็กฝึกงาน 1 อาทิตย์",
+    "urgency": "ปานกลาง",
+    "work_type": "OTHER",
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T10:44:02.876173",
+    "created_at_str": "11/05/2026 10:44",
+    "amount": 1000.0
+  },
+  {
+    "id": "5b1a137b",
+    "name": "แสนสวย  วังวนเวียน",
+    "description": "ขอซื้อเครื่องคิดเลขสำหรับพนักงานบัญชีใหม่ 2 คน 2 เครื่อง",
+    "urgency": "ปานกลาง",
+    "work_type": "IT",
+    "amount": 1000.0,
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T10:58:10.137228",
+    "created_at_str": "11/05/2026 10:58"
+  },
+  {
+    "id": "6486aa6b",
+    "name": "ดวงเดือน มาไวไว",
+    "description": "ขอเบิกค่าเดินทางไปพบลูกค้าที่อยุธยา",
+    "urgency": "ต่ำ",
+    "work_type": "OTHER",
+    "amount": 2000.0,
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T11:25:52.812973",
+    "created_at_str": "11/05/2026 11:25"
+  },
+  {
+    "id": "f8dea746",
+    "name": "เอกพงษ์ จักรการ",
+    "description": "ขอซื้อเครื่องทำน้ำร้อน ใช้ที่แผนก IT",
+    "urgency": "ปานกลาง",
+    "work_type": "OFFICE",
+    "amount": 1000.0,
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T11:26:48.485514",
+    "created_at_str": "11/05/2026 11:26"
+  },
+  {
+    "id": "e7ca633b",
+    "name": "แสงจันทร์ บุญมาดี",
+    "description": "ขอซื้อกระดาษ A4 10 กล่อง",
+    "urgency": "ต่ำ",
+    "work_type": "OFFICE",
+    "amount": 1900.0,
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T11:40:25.993192",
+    "created_at_str": "11/05/2026 11:40"
+  },
+  {
+    "id": "ddae68e4",
+    "name": "วันดี มีเงินทอง",
+    "description": "ขอซ่อมจอคอมพิวเตอร์ แผนก IT",
+    "urgency": "สูง",
+    "work_type": "IT",
+    "amount": 5000.0,
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T12:02:49.893158",
+    "created_at_str": "11/05/2026 12:02"
+  },
+  {
+    "id": "92c8e23d",
+    "name": "บาบาร่า งามจริงจัง",
+    "description": "ขอซื้อพริ้นเตอร์ สี 1 เครื่องสำหรับบัญชี",
+    "urgency": "ต่ำ",
+    "work_type": "IT",
+    "amount": 15000.0,
+    "status": "เสร็จแล้ว",
+    "created_at": "2026-05-11T12:04:19.800270",
+    "created_at_str": "11/05/2026 12:04"
+  }
+]

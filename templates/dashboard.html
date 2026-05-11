@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h4>
+  <a href="/submit" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>ส่งคำขอใหม่</a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md col-lg">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-1 fw-bold text-primary">{{ counts.total }}</div>
+      <div class="text-muted small">คำขอทั้งหมด</div>
+    </div>
+  </div>
+  <div class="col-6 col-md col-lg">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-1 fw-bold text-secondary">{{ counts.pending }}</div>
+      <div class="text-muted small">รอดำเนินการ</div>
+    </div>
+  </div>
+  <div class="col-6 col-md col-lg">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-1 fw-bold text-primary">{{ counts.in_progress }}</div>
+      <div class="text-muted small">กำลังทำ</div>
+    </div>
+  </div>
+  <div class="col-6 col-md col-lg">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-1 fw-bold text-success">{{ counts.done }}</div>
+      <div class="text-muted small">เสร็จแล้ว</div>
+    </div>
+  </div>
+  <div class="col-6 col-md col-lg">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-1 fw-bold text-danger">{{ counts.cancelled }}</div>
+      <div class="text-muted small">ยกเลิก</div>
+    </div>
+  </div>
+</div>
+
+<!-- Work Type Dashboard -->
+<h6 class="fw-bold text-muted mb-2"><i class="bi bi-bar-chart-fill me-1"></i>สรุปตามประเภทงาน</h6>
+<div class="row g-3 mb-4">
+  {% set wt_meta = {
+    'IT':     {'icon': 'bi-pc-display',  'color': 'info',    'text': 'dark'},
+    'OFFICE': {'icon': 'bi-building',    'color': 'warning', 'text': 'dark'},
+    'OTHER':  {'icon': 'bi-three-dots',  'color': 'secondary','text': 'white'}
+  } %}
+  {% for wt in work_types %}
+  {% set s = work_type_stats[wt] %}
+  {% set m = wt_meta[wt] %}
+  <div class="col-12 col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-{{ m.color }} text-{{ m.text }} fw-bold border-0 rounded-top">
+        <i class="bi {{ m.icon }} me-2"></i>{{ wt }}
+        <span class="float-end badge bg-white text-dark">{{ s.total }} รายการ</span>
+      </div>
+      <div class="card-body pb-2">
+        <!-- Status breakdown -->
+        <div class="row text-center g-0 mb-3">
+          <div class="col border-end">
+            <div class="fw-bold text-secondary">{{ s.pending }}</div>
+            <div class="text-muted" style="font-size:0.7rem;">รอดำเนินการ</div>
+          </div>
+          <div class="col border-end">
+            <div class="fw-bold text-primary">{{ s.in_progress }}</div>
+            <div class="text-muted" style="font-size:0.7rem;">กำลังทำ</div>
+          </div>
+          <div class="col border-end">
+            <div class="fw-bold text-success">{{ s.done }}</div>
+            <div class="text-muted" style="font-size:0.7rem;">เสร็จแล้ว</div>
+          </div>
+          <div class="col">
+            <div class="fw-bold text-danger">{{ s.cancelled }}</div>
+            <div class="text-muted" style="font-size:0.7rem;">ยกเลิก</div>
+          </div>
+        </div>
+        <!-- Progress bar -->
+        {% if s.total > 0 %}
+        <div class="progress mb-2" style="height:6px;">
+          {% set active = s.total - s.cancelled %}
+          {% if active > 0 %}
+          <div class="progress-bar bg-secondary" style="width:{{ (s.pending / s.total * 100) | round }}%"></div>
+          <div class="progress-bar bg-primary"   style="width:{{ (s.in_progress / s.total * 100) | round }}%"></div>
+          <div class="progress-bar bg-success"   style="width:{{ (s.done / s.total * 100) | round }}%"></div>
+          <div class="progress-bar bg-danger"    style="width:{{ (s.cancelled / s.total * 100) | round }}%"></div>
+          {% endif %}
+        </div>
+        {% endif %}
+        <!-- Total amount -->
+        <div class="text-end small mt-2">
+          <i class="bi bi-currency-exchange text-muted me-1"></i>
+          {% if s.total_amount > 0 %}
+          <span class="fw-semibold">{{ s.total_amount | fmt_amount }} บาท</span>
+          {% else %}
+          <span class="text-muted fst-italic">ยังไม่มีการระบุเงิน</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Filter Tabs -->
+<div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+  <div>
+    <span class="text-muted small fw-semibold me-1">สถานะ:</span>
+    <div class="nav nav-pills d-inline-flex flex-wrap gap-1" id="filterTabs">
+      <button class="nav-link active py-1 px-3" data-filter="active">งานค้างอยู่</button>
+      <button class="nav-link py-1 px-3" data-filter="รอดำเนินการ">รอดำเนินการ</button>
+      <button class="nav-link py-1 px-3" data-filter="กำลังทำ">กำลังทำ</button>
+      <button class="nav-link py-1 px-3" data-filter="เสร็จแล้ว">เสร็จแล้ว</button>
+      <button class="nav-link py-1 px-3 text-danger" data-filter="ยกเลิก">ยกเลิก</button>
+      <button class="nav-link py-1 px-3" data-filter="all">ทั้งหมด</button>
+    </div>
+  </div>
+  <div>
+    <span class="text-muted small fw-semibold me-1">ประเภท:</span>
+    <div class="nav nav-pills d-inline-flex flex-wrap gap-1" id="typeTabs">
+      <button class="nav-link py-1 px-3 active" data-type="all">ทั้งหมด</button>
+      {% for wt in work_types %}
+      <button class="nav-link py-1 px-3" data-type="{{ wt }}">
+        {% if wt == 'IT' %}<i class="bi bi-pc-display me-1"></i>
+        {% elif wt == 'OFFICE' %}<i class="bi bi-building me-1"></i>
+        {% else %}<i class="bi bi-three-dots me-1"></i>
+        {% endif %}{{ wt }}
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <span class="text-muted small fw-semibold me-1">ความเร่งด่วน:</span>
+    <div class="nav nav-pills d-inline-flex flex-wrap gap-1" id="urgencyTabs">
+      <button class="nav-link py-1 px-3 active" data-urgency="all">ทั้งหมด</button>
+      <button class="nav-link py-1 px-3" data-urgency="สูง" style="color:#dc3545;">สูง</button>
+      <button class="nav-link py-1 px-3" data-urgency="ปานกลาง" style="color:#fd7e14;">ปานกลาง</button>
+      <button class="nav-link py-1 px-3" data-urgency="ต่ำ" style="color:#198754;">ต่ำ</button>
+    </div>
+  </div>
+  <div class="ms-auto">
+    <span class="text-muted small fw-semibold me-1">เรียงตาม:</span>
+    <div class="nav nav-pills d-inline-flex gap-1" id="sortTabs">
+      <button class="nav-link py-1 px-3 active" data-sort="date-desc">
+        <i class="bi bi-sort-down me-1"></i>ใหม่สุด
+      </button>
+      <button class="nav-link py-1 px-3" data-sort="date-asc">
+        <i class="bi bi-sort-up me-1"></i>เก่าสุด
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Request Cards -->
+{% if requests %}
+<div id="requestList">
+  {% for req in requests %}
+  {% set cancelled = req.status == 'ยกเลิก' %}
+  <div class="card border-0 shadow-sm mb-3 request-card {% if cancelled %}opacity-50{% endif %}"
+       data-status="{{ req.status }}" data-type="{{ req.work_type }}"
+       data-date="{{ req.created_at.isoformat() }}"
+       data-urgency-label="{{ req.urgency }}"
+       data-urgency="{{ {'สูง': 0, 'ปานกลาง': 1, 'ต่ำ': 2}.get(req.urgency, 9) }}">
+    <div class="card-body {% if cancelled %}bg-light{% endif %}">
+
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+          {% if not cancelled %}
+          <span class="badge badge-{{ req.urgency }} text-white me-1">
+            {% if req.urgency == 'สูง' %}<i class="bi bi-exclamation-circle me-1"></i>{% endif %}
+            {{ req.urgency }}
+          </span>
+          <span class="badge badge-type-{{ req.work_type }} me-2">
+            {% if req.work_type == 'IT' %}<i class="bi bi-pc-display me-1"></i>
+            {% elif req.work_type == 'OFFICE' %}<i class="bi bi-building me-1"></i>
+            {% else %}<i class="bi bi-three-dots me-1"></i>
+            {% endif %}{{ req.work_type }}
+          </span>
+          {% endif %}
+          <strong class="fs-5 {% if cancelled %}text-decoration-line-through text-muted{% endif %}">{{ req.name }}</strong>
+          <span class="text-muted ms-2 small">#{{ req.id }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-clock text-muted small"></i>
+          <span class="text-muted small">{{ req.created_at_str }}</span>
+        </div>
+      </div>
+
+      <p class="mt-2 mb-2 {% if cancelled %}text-muted text-decoration-line-through{% else %}text-secondary{% endif %}">
+        {{ req.description }}
+      </p>
+
+      {% if req.amount != '' and req.amount is not none %}
+      <div class="mb-3">
+        <span class="text-muted small"><i class="bi bi-currency-exchange me-1"></i>จำนวนเงิน:</span>
+        <span class="fw-semibold text-dark ms-1">{{ req.amount | fmt_amount }} บาท</span>
+      </div>
+      {% elif not cancelled %}
+      <div class="mb-3">
+        <span class="text-muted small fst-italic"><i class="bi bi-dash me-1"></i>ยังไม่ได้ระบุจำนวนเงิน</span>
+      </div>
+      {% endif %}
+
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <!-- Status Badge -->
+        <span class="fw-semibold status-{{ req.status }}">
+          {% if req.status == 'รอดำเนินการ' %}<i class="bi bi-hourglass-split me-1"></i>
+          {% elif req.status == 'กำลังทำ' %}<i class="bi bi-arrow-repeat me-1"></i>
+          {% elif req.status == 'เสร็จแล้ว' %}<i class="bi bi-check-circle me-1"></i>
+          {% else %}<i class="bi bi-x-circle me-1"></i>
+          {% endif %}
+          {{ req.status }}
+        </span>
+
+        {% if cancelled %}
+        <!-- Cancelled: locked, no form -->
+        <span class="ms-auto text-danger small"><i class="bi bi-lock-fill me-1"></i>ไม่สามารถเปลี่ยนสถานะได้</span>
+        {% else %}
+        <!-- Active: edit button (ล็อคเมื่อเสร็จแล้ว) -->
+        {% if req.status != 'เสร็จแล้ว' %}
+        <a href="/edit/{{ req.id }}" class="btn btn-sm btn-outline-warning">
+          <i class="bi bi-pencil me-1"></i>แก้ไข
+        </a>
+        {% endif %}
+        <form method="POST" action="/update-status"
+              class="d-flex gap-2 align-items-center ms-auto flex-wrap update-form">
+          <input type="hidden" name="id" value="{{ req.id }}" />
+          <select name="status" class="form-select form-select-sm status-select" style="width:auto;">
+            {% for s in status_options %}
+            <option value="{{ s }}" {% if s == req.status %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm btn-outline-primary">อัปเดต</button>
+        </form>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+  ยังไม่มีคำขอ — <a href="/submit">ส่งคำขอแรก</a>
+</div>
+{% endif %}
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>ยืนยันการยกเลิก</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>คุณแน่ใจหรือไม่ว่าต้องการ <strong class="text-danger">ยกเลิก</strong> คำขอนี้?</p>
+        <p class="text-muted small mb-0">
+          <i class="bi bi-lock-fill me-1"></i>เมื่อยกเลิกแล้ว จะ<strong>ไม่สามารถ</strong>นำคำขอกลับมาใช้งานได้อีก
+        </p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก (ไม่ดำเนินการ)</button>
+        <button type="button" class="btn btn-danger" id="confirmCancelBtn">
+          <i class="bi bi-x-circle me-1"></i>ยืนยัน ยกเลิกคำขอ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let activeStatus  = 'active';
+  let activeType    = 'all';
+  let activeUrgency = 'all';
+  let activeSort    = 'date-desc';
+
+  const list = document.getElementById('requestList');
+
+  function applyFilters() {
+    document.querySelectorAll('.request-card').forEach(card => {
+      let statusOk;
+      if (activeStatus === 'all')         statusOk = true;
+      else if (activeStatus === 'active') statusOk = card.dataset.status !== 'เสร็จแล้ว' && card.dataset.status !== 'ยกเลิก';
+      else                                statusOk = card.dataset.status === activeStatus;
+      const typeOk    = activeType    === 'all' || card.dataset.type         === activeType;
+      const urgencyOk = activeUrgency === 'all' || card.dataset.urgencyLabel === activeUrgency;
+      card.style.display = (statusOk && typeOk && urgencyOk) ? '' : 'none';
+    });
+  }
+
+  applySort();
+  applyFilters();
+
+  function applySort() {
+    const cards = [...document.querySelectorAll('.request-card')];
+    cards.sort((a, b) => {
+      if (activeSort === 'date-desc') return b.dataset.date.localeCompare(a.dataset.date);
+      if (activeSort === 'date-asc')  return a.dataset.date.localeCompare(b.dataset.date);
+      return Number(a.dataset.urgency) - Number(b.dataset.urgency);
+    });
+    cards.forEach(card => list.appendChild(card));
+  }
+
+  document.querySelectorAll('#filterTabs .nav-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#filterTabs .nav-link').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeStatus = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('#typeTabs .nav-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#typeTabs .nav-link').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeType = btn.dataset.type;
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('#urgencyTabs .nav-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#urgencyTabs .nav-link').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeUrgency = btn.dataset.urgency;
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('#sortTabs .nav-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#sortTabs .nav-link').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeSort = btn.dataset.sort;
+      applySort();
+    });
+  });
+
+  // Cancel confirmation
+  let pendingForm = null;
+  const cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
+
+  document.querySelectorAll('.update-form').forEach(form => {
+    form.addEventListener('submit', function (e) {
+      const select = this.querySelector('.status-select');
+      if (select.value === 'ยกเลิก') {
+        e.preventDefault();
+        pendingForm = this;
+        cancelModal.show();
+      }
+    });
+  });
+
+  document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+    cancelModal.hide();
+    if (pendingForm) pendingForm.submit();
+  });
+</script>
+{% endblock %}

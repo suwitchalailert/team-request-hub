@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir \"c:\\\\Users\\\\suwitcla\\\\Desktop\\\\ClaudeCodeTag\\\\Team Request Hub\\\\templates\")",
+      "Bash(python -c \"import app; print\\('OK - loaded', len\\(app.requests_store\\), 'records'\\)\")",
+      "Bash(python -c \"import app; print\\('OK - loaded', len\\(app.requests_store\\), 'records'\\); [print\\(' -', r['name'], '| amount:', r.get\\('amount',''\\)\\) for r in app.requests_store]\")",
+      "Bash(python -c ' *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\suwitcla\\Desktop\\ClaudeCodeTag\\Team Request Hub"
+    ]
+  }
+}

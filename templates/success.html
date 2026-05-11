@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}ส่งคำขอสำเร็จ — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 text-center py-5">
+    <div class="display-1 text-success mb-3"><i class="bi bi-check-circle-fill"></i></div>
+    <h3 class="fw-bold">ส่งคำขอสำเร็จแล้ว!</h3>
+    <p class="text-muted mb-4">หัวหน้าจะรับทราบและอัปเดตสถานะของคุณเร็วๆ นี้</p>
+    <div class="d-flex gap-3 justify-content-center">
+      <a href="/submit" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>ส่งคำขอใหม่</a>
+      <a href="/" class="btn btn-outline-secondary"><i class="bi bi-speedometer2 me-1"></i>ดู Dashboard</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

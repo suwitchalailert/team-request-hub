@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Team Request Hub{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    body { background: #f4f6fb; font-family: 'Segoe UI', sans-serif; }
+    .navbar-brand { font-weight: 700; letter-spacing: 0.5px; }
+    .nav-link.active { font-weight: 600; }
+    .badge-สูง       { background: #dc3545; }
+    .badge-ปานกลาง  { background: #fd7e14; }
+    .badge-ต่ำ       { background: #198754; }
+    .badge-type-IT     { background: #0dcaf0; color: #000; }
+    .badge-type-OFFICE { background: #ffc107; color: #000; }
+    .badge-type-OTHER  { background: #6c757d; color: #fff; }
+    .status-รอดำเนินการ { color: #6c757d; }
+    .status-กำลังทำ     { color: #0d6efd; }
+    .status-เสร็จแล้ว   { color: #198754; }
+    .status-ยกเลิก      { color: #dc3545; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="/"><i class="bi bi-inbox-fill me-2"></i>Team Request Hub</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+              <i class="bi bi-speedometer2 me-1"></i>Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.path == '/dashboard/person' %}active{% endif %}" href="/dashboard/person">
+              <i class="bi bi-people me-1"></i>รายบุคคล
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if '/submit' in request.path %}active{% endif %}" href="/submit">
+              <i class="bi bi-plus-circle me-1"></i>ส่งคำขอ
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script>
+    function setupAmountInput(el) {
+      if (!el) return;
+      function format(val) {
+        val = val.replace(/[^0-9.]/g, '');
+        const parts = val.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+      }
+      el.addEventListener('input', () => {
+        const pos = el.selectionStart;
+        const before = el.value.substring(0, pos).replace(/,/g, '').length;
+        el.value = format(el.value);
+        let newPos = 0, count = 0;
+        for (let i = 0; i < el.value.length; i++) {
+          if (el.value[i] !== ',') count++;
+          if (count === before) { newPos = i + 1; break; }
+        }
+        el.setSelectionRange(newPos, newPos);
+      });
+      el.closest('form').addEventListener('submit', () => {
+        el.value = el.value.replace(/,/g, '');
+      });
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

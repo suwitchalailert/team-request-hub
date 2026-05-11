@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}ส่งคำขอ — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="fw-bold mb-1"><i class="bi bi-plus-circle me-2 text-primary"></i>ส่งคำขอใหม่</h4>
+        <p class="text-muted small mb-4">กรอกข้อมูลคำขอของคุณ หัวหน้าจะรับทราบและดำเนินการ</p>
+
+        {% if error %}
+        <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/submit">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">ชื่อผู้ส่งคำขอ <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="ระบุชื่อของคุณ" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">รายละเอียดคำขอ <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="4"
+              placeholder="อธิบายสิ่งที่ต้องการให้ชัดเจน..." required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">ประเภทงาน <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3 flex-wrap">
+              {% for wt in work_types %}
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="work_type"
+                       id="wt-{{ wt }}" value="{{ wt }}" {% if loop.first %}checked{% endif %} />
+                <label class="form-check-label fw-semibold" for="wt-{{ wt }}">
+                  {% if wt == 'IT' %}<i class="bi bi-pc-display me-1 text-info"></i>
+                  {% elif wt == 'OFFICE' %}<i class="bi bi-building me-1 text-warning"></i>
+                  {% else %}<i class="bi bi-three-dots me-1 text-secondary"></i>
+                  {% endif %}{{ wt }}
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">จำนวนเงินที่คาดว่าจะจ่าย (บาท)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-currency-exchange"></i></span>
+              <input type="text" name="amount" id="amount" class="form-control"
+                     inputmode="decimal" placeholder="ระบุจำนวนเงิน (ถ้ามี)" autocomplete="off" />
+              <span class="input-group-text">บาท</span>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">ระดับความเร่งด่วน</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="urgency" id="u-low" value="ต่ำ" />
+                <label class="form-check-label text-success fw-semibold" for="u-low">ต่ำ</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="urgency" id="u-mid" value="ปานกลาง" checked />
+                <label class="form-check-label text-warning fw-semibold" for="u-mid">ปานกลาง</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="urgency" id="u-high" value="สูง" />
+                <label class="form-check-label text-danger fw-semibold" for="u-high">สูง</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+            <i class="bi bi-send me-1"></i>ส่งคำขอ
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>setupAmountInput(document.getElementById('amount'));</script>
+{% endblock %}
