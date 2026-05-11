@@ -69,10 +69,10 @@
           <th class="text-center sortable" data-col="total" style="cursor:pointer; width:90px;">
             ทั้งหมด <i class="bi bi-chevron-expand text-muted small"></i>
           </th>
-          <th class="text-center" style="width:90px;">รอ</th>
-          <th class="text-center" style="width:90px;">กำลังทำ</th>
-          <th class="text-center" style="width:90px;">เสร็จ</th>
-          <th class="text-center" style="width:90px;">ยกเลิก</th>
+          <th class="text-center d-none d-md-table-cell" style="width:90px;">รอ</th>
+          <th class="text-center d-none d-md-table-cell" style="width:90px;">กำลังทำ</th>
+          <th class="text-center d-none d-md-table-cell" style="width:90px;">เสร็จ</th>
+          <th class="text-center d-none d-md-table-cell" style="width:90px;">ยกเลิก</th>
           <th class="text-end sortable pe-3" data-col="amount" style="cursor:pointer; width:140px;">
             ยอดเงิน <i class="bi bi-chevron-expand text-muted small"></i>
           </th>
@@ -94,22 +94,22 @@
             </div>
           </td>
           <td class="text-center fw-bold">{{ person.total }}</td>
-          <td class="text-center">
+          <td class="text-center d-none d-md-table-cell">
             {% if person.pending %}
             <span class="text-secondary fw-semibold">{{ person.pending }}</span>
             {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
-          <td class="text-center">
+          <td class="text-center d-none d-md-table-cell">
             {% if person.in_progress %}
             <span class="text-primary fw-semibold">{{ person.in_progress }}</span>
             {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
-          <td class="text-center">
+          <td class="text-center d-none d-md-table-cell">
             {% if person.done %}
             <span class="text-success fw-semibold">{{ person.done }}</span>
             {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
-          <td class="text-center">
+          <td class="text-center d-none d-md-table-cell">
             {% if person.cancelled %}
             <span class="text-danger fw-semibold">{{ person.cancelled }}</span>
             {% else %}<span class="text-muted">—</span>{% endif %}
