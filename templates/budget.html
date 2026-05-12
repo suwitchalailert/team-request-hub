@@ -118,17 +118,31 @@
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th class="ps-3">ประเภท</th>
-          <th>ชื่อ / ประเภทงาน</th>
-          <th class="text-center">ช่วงเวลา</th>
-          <th class="text-center">งวด</th>
-          <th class="text-end">วงเงิน (บาท)</th>
+          <th class="ps-3 sortable" data-col="category" style="cursor:pointer;">
+            ประเภท <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
+          <th class="sortable" data-col="name" style="cursor:pointer;">
+            ชื่อ / ประเภทงาน <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
+          <th class="text-center sortable" data-col="period_type" style="cursor:pointer;">
+            ช่วงเวลา <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
+          <th class="text-center sortable" data-col="period" style="cursor:pointer;">
+            งวด <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
+          <th class="text-end sortable" data-col="amount" style="cursor:pointer;">
+            วงเงิน (บาท) <i class="bi bi-chevron-expand text-muted small"></i>
+          </th>
           <th class="text-center pe-3">ลบ</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="budgetBody">
         {% for b in budgets %}
-        <tr>
+        <tr data-category="{{ b.category }}"
+            data-name="{{ b.name }}"
+            data-period-type="{{ b.period_type }}"
+            data-period="{{ b.period }}"
+            data-amount="{{ b.budget_amount }}">
           <td class="ps-3">
             {% if b.category == 'person' %}
             <span class="badge bg-primary">บุคคล</span>
@@ -164,6 +178,33 @@
 {% block scripts %}
 <script>
   setupAmountInput(document.getElementById('budgetAmount'));
+
+  // Sortable table
+  let sortCol = null, sortAsc = true;
+  document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      sortAsc = sortCol === col ? !sortAsc : true;
+      sortCol = col;
+      document.querySelectorAll('.sortable i').forEach(i => i.className = 'bi bi-chevron-expand text-muted small');
+      th.querySelector('i').className = `bi bi-chevron-${sortAsc ? 'up' : 'down'} text-primary small`;
+      const tbody = document.getElementById('budgetBody');
+      if (!tbody) return;
+      [...tbody.querySelectorAll('tr')].sort((a, b) => {
+        let av = a.dataset[col === 'period_type' ? 'periodType' : col === 'period' ? 'period' : col] || '';
+        let bv = b.dataset[col === 'period_type' ? 'periodType' : col === 'period' ? 'period' : col] || '';
+        if (col === 'amount') { av = parseFloat(av); bv = parseFloat(bv); }
+        if (col === 'period') {
+          // Convert MM/YYYY to YYYYMM for proper sorting
+          const toNum = s => { const p = s.split('/'); return p.length===2 ? p[1]+p[0] : s; };
+          av = toNum(av); bv = toNum(bv);
+        }
+        if (av < bv) return sortAsc ? -1 : 1;
+        if (av > bv) return sortAsc ? 1 : -1;
+        return 0;
+      }).forEach(row => tbody.appendChild(row));
+    });
+  });
 
   const categorySelect = document.getElementById('categorySelect');
   const personField    = document.getElementById('personField');
