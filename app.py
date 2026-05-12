@@ -357,14 +357,16 @@ def budget_delete(budget_id):
 
 @app.route("/budget/template")
 def budget_template():
-    lines = [
-        "ชื่อ,งวด (MM/YYYY),วงเงิน (บาท),ประเภท",
-        "สมชาย แสนดี,05/2026,50000,person",
-        "สมหญิง แสนสวย,05/2026,30000,person",
-        "IT,05/2026,100000,work_type",
-    ]
-    content = "\n".join(lines)
-    return Response(content, mimetype="text/csv; charset=utf-8",
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerows([
+        ["name", "month", "year", "amount", "category"],
+        ["สมชาย แสนดี", 5, 2026, 50000, "person"],
+        ["สมหญิง แสนสวย", 5, 2026, 30000, "person"],
+        ["IT", 5, 2026, 100000, "work_type"],
+    ])
+    content = "﻿" + output.getvalue()
+    return Response(content, mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=budget_template.csv"})
 
 
@@ -376,11 +378,16 @@ def budget_upload():
     content = file.read().decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(content))
     for row in reader:
-        name = (row.get("ชื่อ") or "").strip()
-        period = (row.get("งวด (MM/YYYY)") or "").strip()
-        amount = parse_amount(row.get("วงเงิน (บาท)") or "")
-        category = (row.get("ประเภท") or "person").strip()
-        if not name or not period or amount == "":
+        name = (row.get("name") or "").strip()
+        month = (row.get("month") or "").strip()
+        year = (row.get("year") or "").strip()
+        amount = parse_amount(row.get("amount") or "")
+        category = (row.get("category") or "person").strip()
+        if not name or not month or not year or amount == "":
+            continue
+        try:
+            period = f"{int(month):02d}/{int(year)}"
+        except ValueError:
             continue
         b = {
             "id": str(uuid.uuid4())[:8],
