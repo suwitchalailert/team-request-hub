@@ -8,9 +8,9 @@
 
 <!-- Period Toggle -->
 <div class="nav nav-pills mb-4 gap-2" id="periodTabs">
-  <button class="nav-link active" data-period="month">รายเดือน</button>
+  <button class="nav-link active" data-period="day">รายวัน</button>
+  <button class="nav-link" data-period="month">รายเดือน</button>
   <button class="nav-link" data-period="year">รายปี</button>
-  <button class="nav-link" data-period="day">รายวัน</button>
 </div>
 
 <!-- Chart -->
@@ -78,7 +78,7 @@ const WT_COLORS  = { IT: '#0dcaf0', OFFICE: '#ffc107', OTHER: '#6c757d', PERSON:
 (function () {
   Chart.unregister(ChartDataLabels);
 
-  let activePeriod = 'month';
+  let activePeriod = 'day';
   let chart = null;
 
   function fmt(n) {
