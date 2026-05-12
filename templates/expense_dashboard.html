@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Dashboard ค่าใช้จ่าย — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0"><i class="bi bi-cash-stack me-2 text-success"></i>Dashboard ค่าใช้จ่าย</h4>
+</div>
+
+<!-- Period Toggle -->
+<div class="nav nav-pills mb-4 gap-2" id="periodTabs">
+  <button class="nav-link active" data-period="month">รายเดือน</button>
+  <button class="nav-link" data-period="year">รายปี</button>
+  <button class="nav-link" data-period="day">รายวัน</button>
+</div>
+
+<!-- Chart -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <h6 class="fw-bold text-muted mb-3"><i class="bi bi-bar-chart-fill me-1"></i>ยอดค่าใช้จ่าย (บาท)</h6>
+    <div style="position:relative; height:280px;">
+      <canvas id="expenseChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body pb-0">
+    <h6 class="fw-bold text-muted mb-3"><i class="bi bi-table me-1"></i>รายละเอียดแยกประเภท</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="expenseTable">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">ช่วงเวลา</th>
+          <th class="text-center">จำนวนรายการ</th>
+          {% for wt in work_types %}
+          <th class="text-end d-none d-md-table-cell">{{ wt }}</th>
+          {% endfor %}
+          <th class="text-end pe-3">รวม (บาท)</th>
+        </tr>
+      </thead>
+      <tbody id="expenseBody"></tbody>
+    </table>
+  </div>
+  <div class="card-footer bg-white border-0 text-muted small py-2 px-3" id="expenseTotal"></div>
+</div>
+
+<!-- Hidden data -->
+<script>
+const DATA = {
+  day: [
+    {% for key, val in by_day %}
+    { period: "{{ key }}", count: {{ val.count }}, total: {{ val.total }},
+      by_type: { {% for wt in work_types %}"{{ wt }}": {{ val.by_type[wt] }}{% if not loop.last %},{% endif %}{% endfor %} } }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  month: [
+    {% for key, val in by_month %}
+    { period: "{{ key }}", count: {{ val.count }}, total: {{ val.total }},
+      by_type: { {% for wt in work_types %}"{{ wt }}": {{ val.by_type[wt] }}{% if not loop.last %},{% endif %}{% endfor %} } }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  year: [
+    {% for key, val in by_year %}
+    { period: "{{ key }}", count: {{ val.count }}, total: {{ val.total }},
+      by_type: { {% for wt in work_types %}"{{ wt }}": {{ val.by_type[wt] }}{% if not loop.last %},{% endif %}{% endfor %} } }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+};
+const WORK_TYPES = [{% for wt in work_types %}"{{ wt }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const WT_COLORS  = { IT: '#0dcaf0', OFFICE: '#ffc107', OTHER: '#6c757d', PERSON: '#6f42c1' };
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  Chart.unregister(ChartDataLabels);
+
+  let activePeriod = 'month';
+  let chart = null;
+
+  function fmt(n) {
+    return n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderChart(rows) {
+    const labels  = rows.map(r => r.period);
+    const totals  = rows.map(r => r.total);
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: totals,
+          backgroundColor: 'rgba(25,135,84,0.75)',
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.raw)} บาท` } }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, grid: { color: '#f0f0f0' },
+               ticks: { callback: v => v.toLocaleString('th-TH') } }
+        }
+      }
+    });
+  }
+
+  function renderTable(rows) {
+    const tbody = document.getElementById('expenseBody');
+    tbody.innerHTML = '';
+    let grandTotal = 0, grandCount = 0;
+
+    rows.forEach(r => {
+      grandTotal += r.total;
+      grandCount += r.count;
+      const wtCells = WORK_TYPES.map(wt => {
+        const v = r.by_type[wt] || 0;
+        return `<td class="text-end d-none d-md-table-cell">${v > 0 ? fmt(v) : '<span class="text-muted">—</span>'}</td>`;
+      }).join('');
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td class="ps-3 fw-semibold">${r.period}</td>
+          <td class="text-center">${r.count}</td>
+          ${wtCells}
+          <td class="text-end pe-3 fw-bold text-success">${fmt(r.total)}</td>
+        </tr>`);
+    });
+
+    document.getElementById('expenseTotal').innerHTML =
+      `รวมทั้งหมด <strong>${grandCount} รายการ</strong> — ยอดรวม <strong class="text-success">${fmt(grandTotal)} บาท</strong>`;
+  }
+
+  function render(period) {
+    const rows = DATA[period];
+    if (!rows || rows.length === 0) {
+      document.getElementById('expenseChart').closest('.card').innerHTML =
+        '<div class="card-body text-center text-muted py-5"><i class="bi bi-inbox fs-2 d-block mb-2"></i>ไม่มีข้อมูลค่าใช้จ่าย</div>';
+      document.getElementById('expenseBody').innerHTML =
+        '<tr><td colspan="99" class="text-center text-muted py-4">ไม่มีข้อมูล</td></tr>';
+      return;
+    }
+    renderChart(rows);
+    renderTable(rows);
+  }
+
+  document.querySelectorAll('#periodTabs .nav-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#periodTabs .nav-link').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePeriod = btn.dataset.period;
+      render(activePeriod);
+    });
+  });
+
+  render(activePeriod);
+})();
+</script>
+{% endblock %}

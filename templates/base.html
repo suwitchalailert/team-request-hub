@@ -45,6 +45,11 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% if request.path == '/dashboard/expense' %}active{% endif %}" href="/dashboard/expense">
+              <i class="bi bi-cash-stack me-1"></i>ค่าใช้จ่าย
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link {% if '/submit' in request.path %}active{% endif %}" href="/submit">
               <i class="bi bi-plus-circle me-1"></i>ส่งคำขอ
             </a>

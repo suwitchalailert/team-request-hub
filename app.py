@@ -258,5 +258,31 @@ def dashboard_person():
                            status_options=STATUS_OPTIONS, work_types=WORK_TYPES)
 
 
+@app.route("/dashboard/expense")
+def dashboard_expense():
+    all_requests = load_all()
+    active = [r for r in all_requests if r["status"] != "ยกเลิก" and r.get("amount") not in ("", None)]
+
+    by_day, by_month, by_year = {}, {}, {}
+    for r in active:
+        dt = r["created_at"]
+        amount = float(r["amount"])
+        wt = r.get("work_type", "OTHER")
+        for bucket, key in [(by_day, dt.strftime("%d/%m/%Y")),
+                            (by_month, dt.strftime("%m/%Y")),
+                            (by_year, dt.strftime("%Y"))]:
+            if key not in bucket:
+                bucket[key] = {"total": 0, "count": 0, "by_type": {w: 0 for w in WORK_TYPES}}
+            bucket[key]["total"] += amount
+            bucket[key]["count"] += 1
+            bucket[key]["by_type"][wt] += amount
+
+    return render_template("expense_dashboard.html",
+                           by_day=sorted(by_day.items()),
+                           by_month=sorted(by_month.items()),
+                           by_year=sorted(by_year.items()),
+                           work_types=WORK_TYPES)
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
