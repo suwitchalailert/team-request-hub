@@ -99,7 +99,7 @@
         </div>
         <div class="progress mb-2" style="height:10px;">
           <div class="progress-bar {% if c.over %}bg-danger{% elif c.pct > 80 %}bg-warning{% else %}bg-success{% endif %}"
-               style="width:{{ c.pct }}%"></div>
+               style="width:{{ [c.pct, 100] | min }}%"></div>
         </div>
         <div class="row text-center g-0 small mt-2">
           <div class="col border-end">
@@ -144,7 +144,7 @@
         </div>
         <div class="progress mb-2" style="height:10px;">
           <div class="progress-bar {% if c.over %}bg-danger{% elif c.pct > 80 %}bg-warning{% else %}bg-success{% endif %}"
-               style="width:{{ c.pct }}%"></div>
+               style="width:{{ [c.pct, 100] | min }}%"></div>
         </div>
         <div class="row text-center g-0 small mt-2">
           <div class="col border-end">

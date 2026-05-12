@@ -462,7 +462,7 @@ def dashboard_budget():
         actual = get_actual(b["category"], b["name"])
         budget_amt = float(b["budget_amount"])
         diff = budget_amt - actual
-        pct = min((actual / budget_amt * 100) if budget_amt > 0 else 0, 100)
+        pct = round((actual / budget_amt * 100) if budget_amt > 0 else 0, 1)
         comparisons.append({**b, "actual": actual, "diff": diff, "pct": round(pct, 1), "over": actual > budget_amt})
 
     return render_template("budget_dashboard.html",
