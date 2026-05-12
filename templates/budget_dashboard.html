@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Budget — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0"><i class="bi bi-bar-chart-line me-2 text-success"></i>Dashboard Budget เปรียบเทียบ</h4>
+  <a href="/budget" class="btn btn-outline-warning btn-sm">
+    <i class="bi bi-wallet2 me-1"></i>จัดการ Budget
+  </a>
+</div>
+
+<!-- Period Selector -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <form method="GET" action="/dashboard/budget" class="row g-3 align-items-end">
+      <div class="col-auto">
+        <label class="form-label fw-semibold mb-1">ช่วงเวลา</label>
+        <div class="nav nav-pills gap-2">
+          <button type="submit" name="period_type" value="monthly"
+                  class="nav-link {% if period_type == 'monthly' %}active{% endif %}"
+                  formaction="/dashboard/budget">รายเดือน</button>
+          <button type="submit" name="period_type" value="yearly"
+                  class="nav-link {% if period_type == 'yearly' %}active{% endif %}"
+                  formaction="/dashboard/budget">รายปี</button>
+        </div>
+      </div>
+      <div class="col-auto">
+        <label class="form-label fw-semibold mb-1">เลือกงวด</label>
+        <select name="period" class="form-select" onchange="this.form.submit()">
+          {% set periods = months if period_type == 'monthly' else years %}
+          {% for p in periods %}
+          <option value="{{ p }}" {% if p == period %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="period_type" value="{{ period_type }}" />
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if not comparisons %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center text-muted py-5">
+    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+    ยังไม่มี Budget สำหรับงวดนี้ — <a href="/budget">ไปเพิ่ม Budget</a>
+  </div>
+</div>
+{% else %}
+
+<!-- Summary Cards -->
+{% set total_budget = comparisons | sum(attribute='budget_amount') %}
+{% set total_actual = comparisons | sum(attribute='actual') %}
+{% set total_diff   = total_budget - total_actual %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-4 fw-bold text-warning">{{ total_budget | fmt_amount }}</div>
+      <div class="text-muted small">วงเงิน Budget รวม (บาท)</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-4 fw-bold text-primary">{{ total_actual | fmt_amount }}</div>
+      <div class="text-muted small">ใช้จ่ายจริงรวม (บาท)</div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-4 fw-bold {% if total_diff >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ total_diff | fmt_amount }}
+      </div>
+      <div class="text-muted small">{% if total_diff >= 0 %}คงเหลือ{% else %}เกิน Budget{% endif %} (บาท)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison Cards -->
+{% set person_comps   = comparisons | selectattr('category', 'eq', 'person')    | list %}
+{% set worktype_comps = comparisons | selectattr('category', 'eq', 'work_type') | list %}
+
+{% if person_comps %}
+<h6 class="fw-bold text-muted mb-3"><i class="bi bi-person-fill me-1"></i>Budget รายบุคคล</h6>
+<div class="row g-3 mb-4">
+  {% for c in person_comps %}
+  <div class="col-12 col-md-6">
+    <div class="card border-0 shadow-sm h-100 {% if c.over %}border-danger{% endif %}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-bold fs-6">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold me-2"
+                 style="width:28px;height:28px;font-size:0.8rem;">{{ c.name[0] }}</div>
+            {{ c.name }}
+          </span>
+          {% if c.over %}
+          <span class="badge bg-danger">เกิน Budget</span>
+          {% else %}
+          <span class="badge bg-success">ปกติ</span>
+          {% endif %}
+        </div>
+        <div class="progress mb-2" style="height:10px;">
+          <div class="progress-bar {% if c.over %}bg-danger{% elif c.pct > 80 %}bg-warning{% else %}bg-success{% endif %}"
+               style="width:{{ c.pct }}%"></div>
+        </div>
+        <div class="row text-center g-0 small mt-2">
+          <div class="col border-end">
+            <div class="fw-bold text-warning">{{ c.budget_amount | fmt_amount }}</div>
+            <div class="text-muted">Budget</div>
+          </div>
+          <div class="col border-end">
+            <div class="fw-bold text-primary">{{ c.actual | fmt_amount }}</div>
+            <div class="text-muted">ใช้จริง</div>
+          </div>
+          <div class="col">
+            <div class="fw-bold {% if c.over %}text-danger{% else %}text-success{% endif %}">
+              {{ c.diff | fmt_amount }}
+            </div>
+            <div class="text-muted">{% if c.over %}เกิน{% else %}คงเหลือ{% endif %}</div>
+          </div>
+        </div>
+        <div class="text-end mt-1 small text-muted">ใช้ไป {{ c.pct }}%</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if worktype_comps %}
+<h6 class="fw-bold text-muted mb-3"><i class="bi bi-diagram-3 me-1"></i>Budget ตามประเภทงาน</h6>
+<div class="row g-3">
+  {% for c in worktype_comps %}
+  <div class="col-12 col-md-6">
+    <div class="card border-0 shadow-sm h-100 {% if c.over %}border-danger{% endif %}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-bold fs-6">
+            <span class="badge badge-type-{{ c.name }} me-2">{{ c.name }}</span>
+          </span>
+          {% if c.over %}
+          <span class="badge bg-danger">เกิน Budget</span>
+          {% else %}
+          <span class="badge bg-success">ปกติ</span>
+          {% endif %}
+        </div>
+        <div class="progress mb-2" style="height:10px;">
+          <div class="progress-bar {% if c.over %}bg-danger{% elif c.pct > 80 %}bg-warning{% else %}bg-success{% endif %}"
+               style="width:{{ c.pct }}%"></div>
+        </div>
+        <div class="row text-center g-0 small mt-2">
+          <div class="col border-end">
+            <div class="fw-bold text-warning">{{ c.budget_amount | fmt_amount }}</div>
+            <div class="text-muted">Budget</div>
+          </div>
+          <div class="col border-end">
+            <div class="fw-bold text-primary">{{ c.actual | fmt_amount }}</div>
+            <div class="text-muted">ใช้จริง</div>
+          </div>
+          <div class="col">
+            <div class="fw-bold {% if c.over %}text-danger{% else %}text-success{% endif %}">
+              {{ c.diff | fmt_amount }}
+            </div>
+            <div class="text-muted">{% if c.over %}เกิน{% else %}คงเหลือ{% endif %}</div>
+          </div>
+        </div>
+        <div class="text-end mt-1 small text-muted">ใช้ไป {{ c.pct }}%</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

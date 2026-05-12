@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}จัดการ Budget — Team Request Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2 text-warning"></i>จัดการ Budget</h4>
+  <a href="/dashboard/budget" class="btn btn-outline-success btn-sm">
+    <i class="bi bi-bar-chart-line me-1"></i>ดู Dashboard เปรียบเทียบ
+  </a>
+</div>
+
+<!-- Add Budget Form -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-1 text-primary"></i>เพิ่ม Budget ใหม่</h6>
+    <form method="POST" action="/budget/add">
+      <div class="row g-3">
+
+        <div class="col-12 col-md-3">
+          <label class="form-label fw-semibold">ประเภท Budget</label>
+          <select name="category" id="categorySelect" class="form-select">
+            <option value="person">รายบุคคล</option>
+            <option value="work_type">ประเภทงาน</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-3" id="personField">
+          <label class="form-label fw-semibold">ชื่อบุคคล</label>
+          <input type="text" name="name" id="personName" class="form-control" list="personList" placeholder="ระบุชื่อ" />
+          <datalist id="personList">
+            {% for p in persons %}<option value="{{ p }}">{% endfor %}
+          </datalist>
+        </div>
+
+        <div class="col-12 col-md-3 d-none" id="workTypeField">
+          <label class="form-label fw-semibold">ประเภทงาน</label>
+          <select name="name" id="workTypeName" class="form-select" disabled>
+            {% for wt in work_types %}<option value="{{ wt }}">{{ wt }}</option>{% endfor %}
+          </select>
+        </div>
+
+        <div class="col-6 col-md-2">
+          <label class="form-label fw-semibold">ช่วงเวลา</label>
+          <select name="period_type" id="periodType" class="form-select">
+            <option value="monthly">รายเดือน</option>
+            <option value="yearly">รายปี</option>
+          </select>
+        </div>
+
+        <div class="col-6 col-md-2" id="monthPeriod">
+          <label class="form-label fw-semibold">เดือน/ปี</label>
+          <input type="month" name="period" class="form-control" id="monthInput" />
+        </div>
+
+        <div class="col-6 col-md-2 d-none" id="yearPeriod">
+          <label class="form-label fw-semibold">ปี</label>
+          <input type="number" name="period" class="form-control" id="yearInput"
+                 placeholder="เช่น 2026" min="2020" max="2099" disabled />
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label class="form-label fw-semibold">วงเงิน Budget (บาท)</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-currency-exchange"></i></span>
+            <input type="text" name="budget_amount" id="budgetAmount" class="form-control"
+                   inputmode="decimal" placeholder="0.00" autocomplete="off" />
+            <span class="input-group-text">บาท</span>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-save me-1"></i>บันทึก
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Budget List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body pb-0">
+    <h6 class="fw-bold text-muted mb-3"><i class="bi bi-list-ul me-1"></i>รายการ Budget ที่ตั้งไว้</h6>
+  </div>
+  {% if budgets %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">ประเภท</th>
+          <th>ชื่อ / ประเภทงาน</th>
+          <th class="text-center">ช่วงเวลา</th>
+          <th class="text-center">งวด</th>
+          <th class="text-end">วงเงิน (บาท)</th>
+          <th class="text-center pe-3">ลบ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in budgets %}
+        <tr>
+          <td class="ps-3">
+            {% if b.category == 'person' %}
+            <span class="badge bg-primary">บุคคล</span>
+            {% else %}
+            <span class="badge bg-secondary">ประเภทงาน</span>
+            {% endif %}
+          </td>
+          <td class="fw-semibold">{{ b.name }}</td>
+          <td class="text-center">{{ "รายเดือน" if b.period_type == "monthly" else "รายปี" }}</td>
+          <td class="text-center">{{ b.period }}</td>
+          <td class="text-end fw-bold text-success">{{ b.budget_amount | fmt_amount }}</td>
+          <td class="text-center pe-3">
+            <form method="POST" action="/budget/delete/{{ b.id }}"
+                  onsubmit="return confirm('ลบ Budget นี้?')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body text-center text-muted py-4">
+    <i class="bi bi-inbox fs-2 d-block mb-2"></i>ยังไม่มี Budget — เพิ่มจากฟอร์มด้านบน
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  setupAmountInput(document.getElementById('budgetAmount'));
+
+  const categorySelect = document.getElementById('categorySelect');
+  const personField    = document.getElementById('personField');
+  const workTypeField  = document.getElementById('workTypeField');
+  const personName     = document.getElementById('personName');
+  const workTypeName   = document.getElementById('workTypeName');
+  const periodType     = document.getElementById('periodType');
+  const monthPeriod    = document.getElementById('monthPeriod');
+  const yearPeriod     = document.getElementById('yearPeriod');
+  const monthInput     = document.getElementById('monthInput');
+  const yearInput      = document.getElementById('yearInput');
+
+  // Set default month
+  const now = new Date();
+  monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  yearInput.value = now.getFullYear();
+
+  categorySelect.addEventListener('change', () => {
+    const isWt = categorySelect.value === 'work_type';
+    personField.classList.toggle('d-none', isWt);
+    workTypeField.classList.toggle('d-none', !isWt);
+    personName.disabled = isWt;
+    workTypeName.disabled = !isWt;
+  });
+
+  periodType.addEventListener('change', () => {
+    const isYear = periodType.value === 'yearly';
+    monthPeriod.classList.toggle('d-none', isYear);
+    yearPeriod.classList.toggle('d-none', !isYear);
+    monthInput.disabled = isYear;
+    yearInput.disabled = !isYear;
+  });
+</script>
+{% endblock %}

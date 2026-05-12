@@ -19,7 +19,9 @@ if USE_SUPABASE:
     _sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
+BUDGETS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "budgets.json")
 TABLE = "requests"
+BUDGETS_TABLE = "budgets"
 BUCKET = "attachments"
 
 
@@ -112,6 +114,37 @@ def find_record(req_id):
         return _normalize(rows[0]) if rows else None
     records = load_all()
     return next((r for r in records if r["id"] == req_id), None)
+
+
+def load_budgets():
+    if USE_SUPABASE:
+        res = _sb.table(BUDGETS_TABLE).select("*").execute()
+        return res.data or []
+    if not os.path.exists(BUDGETS_FILE):
+        return []
+    with open(BUDGETS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_budgets_local(budgets):
+    with open(BUDGETS_FILE, "w", encoding="utf-8") as f:
+        json.dump(budgets, f, ensure_ascii=False, indent=2)
+
+
+def db_budget_upsert(b):
+    if USE_SUPABASE:
+        _sb.table(BUDGETS_TABLE).upsert(b).execute()
+    else:
+        budgets = [x for x in load_budgets() if x["id"] != b["id"]]
+        budgets.append(b)
+        _save_budgets_local(budgets)
+
+
+def db_budget_delete(budget_id):
+    if USE_SUPABASE:
+        _sb.table(BUDGETS_TABLE).delete().eq("id", budget_id).execute()
+    else:
+        _save_budgets_local([b for b in load_budgets() if b["id"] != budget_id])
 
 
 def get_sorted(records):
@@ -275,6 +308,88 @@ def dashboard_person():
     persons.sort(key=lambda p: p["total"], reverse=True)
     return render_template("person_dashboard.html", persons=persons,
                            status_options=STATUS_OPTIONS, work_types=WORK_TYPES)
+
+
+@app.route("/budget", methods=["GET", "POST"])
+def budget_manage():
+    all_requests = load_all()
+    persons = sorted(set(r["name"] for r in all_requests))
+    budgets = load_budgets()
+    return render_template("budget.html", budgets=budgets, persons=persons, work_types=WORK_TYPES)
+
+
+@app.route("/budget/add", methods=["POST"])
+def budget_add():
+    category = request.form.get("category", "person")
+    name = request.form.get("name", "").strip()
+    period_type = request.form.get("period_type", "monthly")
+    period_raw = request.form.get("period", "").strip()
+    budget_amount = parse_amount(request.form.get("budget_amount", ""))
+
+    if period_type == "monthly" and "-" in period_raw:
+        y, m = period_raw.split("-")
+        period = f"{m}/{y}"
+    else:
+        period = period_raw
+
+    if not name or not period or budget_amount == "":
+        return redirect(url_for("budget_manage"))
+
+    b = {
+        "id": str(uuid.uuid4())[:8],
+        "category": category,
+        "name": name,
+        "period_type": period_type,
+        "period": period,
+        "budget_amount": float(budget_amount),
+    }
+    db_budget_upsert(b)
+    return redirect(url_for("budget_manage"))
+
+
+@app.route("/budget/delete/<budget_id>", methods=["POST"])
+def budget_delete(budget_id):
+    db_budget_delete(budget_id)
+    return redirect(url_for("budget_manage"))
+
+
+@app.route("/dashboard/budget")
+def dashboard_budget():
+    budgets = load_budgets()
+    all_requests = load_all()
+    active = [r for r in all_requests if r["status"] != "ยกเลิก" and r.get("amount") not in ("", None)]
+
+    months = sorted(set(r["created_at"].strftime("%m/%Y") for r in active), reverse=True)
+    years  = sorted(set(r["created_at"].strftime("%Y") for r in active), reverse=True)
+
+    period_type = request.args.get("period_type", "monthly")
+    period = request.args.get("period", months[0] if months else "")
+
+    period_budgets = [b for b in budgets if b["period_type"] == period_type and b["period"] == period]
+
+    def get_actual(category, name):
+        total = 0
+        for r in active:
+            r_period = r["created_at"].strftime("%m/%Y") if period_type == "monthly" else r["created_at"].strftime("%Y")
+            if r_period != period:
+                continue
+            if category == "person" and r["name"] == name:
+                total += float(r["amount"])
+            elif category == "work_type" and r.get("work_type") == name:
+                total += float(r["amount"])
+        return total
+
+    comparisons = []
+    for b in period_budgets:
+        actual = get_actual(b["category"], b["name"])
+        budget_amt = float(b["budget_amount"])
+        diff = budget_amt - actual
+        pct = min((actual / budget_amt * 100) if budget_amt > 0 else 0, 100)
+        comparisons.append({**b, "actual": actual, "diff": diff, "pct": round(pct, 1), "over": actual > budget_amt})
+
+    return render_template("budget_dashboard.html",
+                           comparisons=comparisons, months=months, years=years,
+                           period_type=period_type, period=period, work_types=WORK_TYPES)
 
 
 @app.route("/dashboard/expense")
