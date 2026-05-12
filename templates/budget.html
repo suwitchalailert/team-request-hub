@@ -111,14 +111,23 @@
 <!-- Budget List -->
 <div class="card border-0 shadow-sm">
   <div class="card-body pb-0">
-    <h6 class="fw-bold text-muted mb-3"><i class="bi bi-list-ul me-1"></i>รายการ Budget ที่ตั้งไว้</h6>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold text-muted mb-0"><i class="bi bi-list-ul me-1"></i>รายการ Budget ที่ตั้งไว้</h6>
+      <button id="bulkDeleteBtn" class="btn btn-sm btn-danger d-none" onclick="bulkDelete()">
+        <i class="bi bi-trash me-1"></i>ลบที่เลือก (<span id="selectedCount">0</span>)
+      </button>
+    </div>
   </div>
   {% if budgets %}
+  <form method="POST" action="/budget/delete-many" id="bulkForm">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th class="ps-3 sortable" data-col="category" style="cursor:pointer;">
+          <th class="ps-3" style="width:40px;">
+            <input type="checkbox" id="checkAll" class="form-check-input" />
+          </th>
+          <th class="sortable" data-col="category" style="cursor:pointer;">
             ประเภท <i class="bi bi-chevron-expand text-muted small"></i>
           </th>
           <th class="sortable" data-col="name" style="cursor:pointer;">
@@ -144,6 +153,9 @@
             data-period="{{ b.period }}"
             data-amount="{{ b.budget_amount }}">
           <td class="ps-3">
+            <input type="checkbox" name="ids" value="{{ b.id }}" class="form-check-input row-check" />
+          </td>
+          <td>
             {% if b.category == 'person' %}
             <span class="badge bg-primary">บุคคล</span>
             {% else %}
@@ -155,18 +167,17 @@
           <td class="text-center">{{ b.period }}</td>
           <td class="text-end fw-bold text-success">{{ b.budget_amount | fmt_amount }}</td>
           <td class="text-center pe-3">
-            <form method="POST" action="/budget/delete/{{ b.id }}"
-                  onsubmit="return confirm('ลบ Budget นี้?')">
-              <button type="submit" class="btn btn-sm btn-outline-danger">
-                <i class="bi bi-trash"></i>
-              </button>
-            </form>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    onclick="if(confirm('ลบ Budget นี้?')) { fetch('/budget/delete/{{ b.id }}', {method:'POST'}).then(()=>location.reload()); }">
+              <i class="bi bi-trash"></i>
+            </button>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  </form>
   {% else %}
   <div class="card-body text-center text-muted py-4">
     <i class="bi bi-inbox fs-2 d-block mb-2"></i>ยังไม่มี Budget — เพิ่มจากฟอร์มด้านบน
@@ -178,6 +189,34 @@
 {% block scripts %}
 <script>
   setupAmountInput(document.getElementById('budgetAmount'));
+
+  // Checkbox & bulk delete
+  const checkAll = document.getElementById('checkAll');
+  const bulkBtn  = document.getElementById('bulkDeleteBtn');
+  const countEl  = document.getElementById('selectedCount');
+
+  function updateBulkBtn() {
+    const checked = document.querySelectorAll('.row-check:checked').length;
+    countEl.textContent = checked;
+    bulkBtn.classList.toggle('d-none', checked === 0);
+  }
+
+  if (checkAll) {
+    checkAll.addEventListener('change', () => {
+      document.querySelectorAll('.row-check').forEach(cb => cb.checked = checkAll.checked);
+      updateBulkBtn();
+    });
+    document.querySelectorAll('.row-check').forEach(cb =>
+      cb.addEventListener('change', updateBulkBtn));
+  }
+
+  function bulkDelete() {
+    const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
+    if (!ids.length) return;
+    if (!confirm(`ลบ ${ids.length} รายการที่เลือก?`)) return;
+    Promise.all(ids.map(id => fetch(`/budget/delete/${id}`, {method:'POST'})))
+      .then(() => location.reload());
+  }
 
   // Sortable table
   let sortCol = null, sortAsc = true;
