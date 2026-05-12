@@ -451,7 +451,7 @@ def dashboard_budget():
             r_period = r["created_at"].strftime("%m/%Y") if period_type == "monthly" else r["created_at"].strftime("%Y")
             if r_period != period:
                 continue
-            if category == "person" and r["name"] == name:
+            if category == "person" and r["name"] == name and r.get("work_type") == "PERSON":
                 total += float(r["amount"])
             elif category == "work_type" and r.get("work_type") == name:
                 total += float(r["amount"])
