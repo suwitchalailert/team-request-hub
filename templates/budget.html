@@ -110,74 +110,81 @@
 
 <!-- Budget List -->
 <div class="card border-0 shadow-sm">
-  <div class="card-body pb-0">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h6 class="fw-bold text-muted mb-0"><i class="bi bi-list-ul me-1"></i>รายการ Budget ที่ตั้งไว้</h6>
-      <button id="bulkDeleteBtn" class="btn btn-sm btn-danger d-none" onclick="bulkDelete()">
-        <i class="bi bi-trash me-1"></i>ลบที่เลือก (<span id="selectedCount">0</span>)
-      </button>
+  <div class="card-body pb-2">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h6 class="fw-bold text-muted mb-0"><i class="bi bi-grid-3x3-gap me-1"></i>รายการ Budget ที่ตั้งไว้</h6>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="d-flex gap-1 align-items-center">
+          <span class="text-muted small">เรียงตาม:</span>
+          <select id="sortSelect" class="form-select form-select-sm" style="width:auto;">
+            <option value="period">งวด</option>
+            <option value="name">ชื่อ</option>
+            <option value="category">ประเภท</option>
+            <option value="amount">วงเงิน</option>
+          </select>
+          <button id="sortDirBtn" class="btn btn-sm btn-outline-secondary" title="สลับลำดับ">
+            <i class="bi bi-sort-down" id="sortDirIcon"></i>
+          </button>
+        </div>
+        <div class="form-check form-check-inline mb-0">
+          <input type="checkbox" id="checkAll" class="form-check-input" />
+          <label class="form-check-label small text-muted" for="checkAll">เลือกทั้งหมด</label>
+        </div>
+        <button id="bulkDeleteBtn" class="btn btn-sm btn-danger d-none" onclick="bulkDelete()">
+          <i class="bi bi-trash me-1"></i>ลบที่เลือก (<span id="selectedCount">0</span>)
+        </button>
+      </div>
     </div>
   </div>
+
   {% if budgets %}
-  <form method="POST" action="/budget/delete-many" id="bulkForm">
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th class="ps-3" style="width:40px;">
-            <input type="checkbox" id="checkAll" class="form-check-input" />
-          </th>
-          <th class="sortable" data-col="category" style="cursor:pointer;">
-            ประเภท <i class="bi bi-chevron-expand text-muted small"></i>
-          </th>
-          <th class="sortable" data-col="name" style="cursor:pointer;">
-            ชื่อ / ประเภทงาน <i class="bi bi-chevron-expand text-muted small"></i>
-          </th>
-          <th class="text-center sortable" data-col="period_type" style="cursor:pointer;">
-            ช่วงเวลา <i class="bi bi-chevron-expand text-muted small"></i>
-          </th>
-          <th class="text-center sortable" data-col="period" style="cursor:pointer;">
-            งวด <i class="bi bi-chevron-expand text-muted small"></i>
-          </th>
-          <th class="text-end sortable" data-col="amount" style="cursor:pointer;">
-            วงเงิน (บาท) <i class="bi bi-chevron-expand text-muted small"></i>
-          </th>
-          <th class="text-center pe-3">ลบ</th>
-        </tr>
-      </thead>
-      <tbody id="budgetBody">
-        {% for b in budgets %}
-        <tr data-category="{{ b.category }}"
-            data-name="{{ b.name }}"
-            data-period-type="{{ b.period_type }}"
-            data-period="{{ b.period }}"
-            data-amount="{{ b.budget_amount }}">
-          <td class="ps-3">
-            <input type="checkbox" name="ids" value="{{ b.id }}" class="form-check-input row-check" />
-          </td>
-          <td>
-            {% if b.category == 'person' %}
-            <span class="badge bg-primary">บุคคล</span>
-            {% else %}
-            <span class="badge bg-secondary">ประเภทงาน</span>
-            {% endif %}
-          </td>
-          <td class="fw-semibold">{{ b.name }}</td>
-          <td class="text-center">{{ "รายเดือน" if b.period_type == "monthly" else "รายปี" }}</td>
-          <td class="text-center">{{ b.period }}</td>
-          <td class="text-end fw-bold text-success">{{ b.budget_amount | fmt_amount }}</td>
-          <td class="text-center pe-3">
-            <button type="button" class="btn btn-sm btn-outline-danger"
+  <div class="card-body pt-0">
+    <div class="row g-2" id="budgetGrid">
+      {% for b in budgets %}
+      <div class="col-6 col-md-4 col-lg-3 budget-card-wrap"
+           data-category="{{ b.category }}"
+           data-name="{{ b.name }}"
+           data-period-type="{{ b.period_type }}"
+           data-period="{{ b.period }}"
+           data-amount="{{ b.budget_amount }}">
+        <div class="card h-100 border shadow-none budget-card position-relative"
+             style="border-color:#dee2e6!important;">
+          <!-- Checkbox overlay -->
+          <div class="position-absolute top-0 start-0 m-1">
+            <input type="checkbox" class="form-check-input row-check" value="{{ b.id }}" />
+          </div>
+          <!-- Delete button overlay -->
+          <div class="position-absolute top-0 end-0 m-1">
+            <button type="button" class="btn btn-sm btn-link text-danger p-0" style="line-height:1;"
                     onclick="if(confirm('ลบ Budget นี้?')) { fetch('/budget/delete/{{ b.id }}', {method:'POST'}).then(()=>location.reload()); }">
-              <i class="bi bi-trash"></i>
+              <i class="bi bi-x-circle-fill" style="font-size:1rem;"></i>
             </button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          </div>
+          <div class="card-body p-2 pt-3 text-center">
+            {% if b.category == 'person' %}
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold mb-1"
+                 style="width:36px;height:36px;font-size:0.9rem;">{{ b.name[0] }}</div>
+            <div class="fw-semibold small text-truncate" title="{{ b.name }}">{{ b.name }}</div>
+            <span class="badge bg-primary" style="font-size:0.65rem;">บุคคล</span>
+            {% else %}
+            <div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center fw-bold mb-1"
+                 style="width:36px;height:36px;font-size:0.75rem;"><i class="bi bi-diagram-3"></i></div>
+            <div class="fw-semibold small text-truncate" title="{{ b.name }}">{{ b.name }}</div>
+            <span class="badge bg-secondary" style="font-size:0.65rem;">ประเภทงาน</span>
+            {% endif %}
+            <div class="mt-2 text-muted" style="font-size:0.7rem;">
+              {{ "รายเดือน" if b.period_type == "monthly" else "รายปี" }} · {{ b.period }}
+            </div>
+            <div class="fw-bold text-success mt-1" style="font-size:0.95rem;">
+              {{ b.budget_amount | fmt_amount }}
+              <span class="text-muted fw-normal" style="font-size:0.65rem;">บาท</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  </form>
   {% else %}
   <div class="card-body text-center text-muted py-4">
     <i class="bi bi-inbox fs-2 d-block mb-2"></i>ยังไม่มี Budget — เพิ่มจากฟอร์มด้านบน
@@ -189,6 +196,38 @@
 {% block scripts %}
 <script>
   setupAmountInput(document.getElementById('budgetAmount'));
+
+  // Form controls
+  const categorySelect = document.getElementById('categorySelect');
+  const personField    = document.getElementById('personField');
+  const workTypeField  = document.getElementById('workTypeField');
+  const personName     = document.getElementById('personName');
+  const workTypeName   = document.getElementById('workTypeName');
+  const periodType     = document.getElementById('periodType');
+  const monthPeriod    = document.getElementById('monthPeriod');
+  const yearPeriod     = document.getElementById('yearPeriod');
+  const monthInput     = document.getElementById('monthInput');
+  const yearInput      = document.getElementById('yearInput');
+
+  const now = new Date();
+  monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  yearInput.value = now.getFullYear();
+
+  categorySelect.addEventListener('change', () => {
+    const isWt = categorySelect.value === 'work_type';
+    personField.classList.toggle('d-none', isWt);
+    workTypeField.classList.toggle('d-none', !isWt);
+    personName.disabled = isWt;
+    workTypeName.disabled = !isWt;
+  });
+
+  periodType.addEventListener('change', () => {
+    const isYear = periodType.value === 'yearly';
+    monthPeriod.classList.toggle('d-none', isYear);
+    yearPeriod.classList.toggle('d-none', !isYear);
+    monthInput.disabled = isYear;
+    yearInput.disabled = !isYear;
+  });
 
   // Checkbox & bulk delete
   const checkAll = document.getElementById('checkAll');
@@ -218,63 +257,38 @@
       .then(() => location.reload());
   }
 
-  // Sortable table
-  let sortCol = null, sortAsc = true;
-  document.querySelectorAll('.sortable').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      sortAsc = sortCol === col ? !sortAsc : true;
-      sortCol = col;
-      document.querySelectorAll('.sortable i').forEach(i => i.className = 'bi bi-chevron-expand text-muted small');
-      th.querySelector('i').className = `bi bi-chevron-${sortAsc ? 'up' : 'down'} text-primary small`;
-      const tbody = document.getElementById('budgetBody');
-      if (!tbody) return;
-      [...tbody.querySelectorAll('tr')].sort((a, b) => {
-        let av = a.dataset[col === 'period_type' ? 'periodType' : col === 'period' ? 'period' : col] || '';
-        let bv = b.dataset[col === 'period_type' ? 'periodType' : col === 'period' ? 'period' : col] || '';
-        if (col === 'amount') { av = parseFloat(av); bv = parseFloat(bv); }
-        if (col === 'period') {
-          // Convert MM/YYYY to YYYYMM for proper sorting
-          const toNum = s => { const p = s.split('/'); return p.length===2 ? p[1]+p[0] : s; };
-          av = toNum(av); bv = toNum(bv);
-        }
-        if (av < bv) return sortAsc ? -1 : 1;
-        if (av > bv) return sortAsc ? 1 : -1;
-        return 0;
-      }).forEach(row => tbody.appendChild(row));
+  // Card grid sorting
+  let sortAsc = true;
+  const sortSelect  = document.getElementById('sortSelect');
+  const sortDirBtn  = document.getElementById('sortDirBtn');
+  const sortDirIcon = document.getElementById('sortDirIcon');
+  const grid        = document.getElementById('budgetGrid');
+
+  function sortGrid() {
+    if (!grid) return;
+    const col = sortSelect ? sortSelect.value : 'period';
+    const toNum = s => { const p = s.split('/'); return p.length===2 ? p[1]+p[0] : s; };
+    [...grid.querySelectorAll('.budget-card-wrap')].sort((a, b) => {
+      let av = a.dataset[col === 'period_type' ? 'periodType' : col === 'amount' ? 'amount' : col] || '';
+      let bv = b.dataset[col === 'period_type' ? 'periodType' : col === 'amount' ? 'amount' : col] || '';
+      if (col === 'amount') { av = parseFloat(av); bv = parseFloat(bv); }
+      if (col === 'period') { av = toNum(av); bv = toNum(bv); }
+      if (av < bv) return sortAsc ? -1 : 1;
+      if (av > bv) return sortAsc ? 1 : -1;
+      return 0;
+    }).forEach(card => grid.appendChild(card));
+  }
+
+  if (sortSelect) sortSelect.addEventListener('change', sortGrid);
+  if (sortDirBtn) {
+    sortDirBtn.addEventListener('click', () => {
+      sortAsc = !sortAsc;
+      sortDirIcon.className = sortAsc ? 'bi bi-sort-down' : 'bi bi-sort-up';
+      sortGrid();
     });
-  });
+  }
 
-  const categorySelect = document.getElementById('categorySelect');
-  const personField    = document.getElementById('personField');
-  const workTypeField  = document.getElementById('workTypeField');
-  const personName     = document.getElementById('personName');
-  const workTypeName   = document.getElementById('workTypeName');
-  const periodType     = document.getElementById('periodType');
-  const monthPeriod    = document.getElementById('monthPeriod');
-  const yearPeriod     = document.getElementById('yearPeriod');
-  const monthInput     = document.getElementById('monthInput');
-  const yearInput      = document.getElementById('yearInput');
-
-  // Set default month
-  const now = new Date();
-  monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  yearInput.value = now.getFullYear();
-
-  categorySelect.addEventListener('change', () => {
-    const isWt = categorySelect.value === 'work_type';
-    personField.classList.toggle('d-none', isWt);
-    workTypeField.classList.toggle('d-none', !isWt);
-    personName.disabled = isWt;
-    workTypeName.disabled = !isWt;
-  });
-
-  periodType.addEventListener('change', () => {
-    const isYear = periodType.value === 'yearly';
-    monthPeriod.classList.toggle('d-none', isYear);
-    yearPeriod.classList.toggle('d-none', !isYear);
-    monthInput.disabled = isYear;
-    yearInput.disabled = !isYear;
-  });
+  // Initial sort by period
+  sortGrid();
 </script>
 {% endblock %}
