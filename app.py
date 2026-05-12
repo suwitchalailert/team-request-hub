@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, Response
 from datetime import datetime
 import uuid
 import os
 import json
+import csv
+import io
 
 app = Flask(__name__)
 
@@ -350,6 +352,45 @@ def budget_add():
 @app.route("/budget/delete/<budget_id>", methods=["POST"])
 def budget_delete(budget_id):
     db_budget_delete(budget_id)
+    return redirect(url_for("budget_manage"))
+
+
+@app.route("/budget/template")
+def budget_template():
+    lines = [
+        "ชื่อ,งวด (MM/YYYY),วงเงิน (บาท),ประเภท",
+        "สมชาย แสนดี,05/2026,50000,person",
+        "สมหญิง แสนสวย,05/2026,30000,person",
+        "IT,05/2026,100000,work_type",
+    ]
+    content = "\n".join(lines)
+    return Response(content, mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": "attachment; filename=budget_template.csv"})
+
+
+@app.route("/budget/upload", methods=["POST"])
+def budget_upload():
+    file = request.files.get("csv_file")
+    if not file or not file.filename:
+        return redirect(url_for("budget_manage"))
+    content = file.read().decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(content))
+    for row in reader:
+        name = (row.get("ชื่อ") or "").strip()
+        period = (row.get("งวด (MM/YYYY)") or "").strip()
+        amount = parse_amount(row.get("วงเงิน (บาท)") or "")
+        category = (row.get("ประเภท") or "person").strip()
+        if not name or not period or amount == "":
+            continue
+        b = {
+            "id": str(uuid.uuid4())[:8],
+            "category": category if category in ("person", "work_type") else "person",
+            "name": name,
+            "period_type": "monthly",
+            "period": period,
+            "budget_amount": float(amount),
+        }
+        db_budget_upsert(b)
     return redirect(url_for("budget_manage"))
 
 
