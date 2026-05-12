@@ -20,6 +20,7 @@ if USE_SUPABASE:
 
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
 TABLE = "requests"
+BUCKET = "attachments"
 
 
 def _parse_ts(ts):
@@ -36,9 +37,22 @@ def _normalize(r):
     r["created_at"] = _parse_ts(r.get("created_at", ""))
     r["amount"] = r.get("amount") if r.get("amount") not in (None, "") else ""
     r.setdefault("work_type", "OTHER")
+    r.setdefault("attachment_url", None)
     if not r.get("created_at_str"):
         r["created_at_str"] = r["created_at"].strftime("%d/%m/%Y %H:%M")
     return r
+
+
+def upload_attachment(file_obj):
+    if not USE_SUPABASE or not file_obj or not file_obj.filename:
+        return None
+    ext = file_obj.filename.rsplit(".", 1)[-1].lower() if "." in file_obj.filename else "bin"
+    import uuid as _uuid
+    path = f"{_uuid.uuid4().hex}.{ext}"
+    data = file_obj.read()
+    content_type = file_obj.content_type or "application/octet-stream"
+    _sb.storage.from_(BUCKET).upload(path, data, {"content-type": content_type})
+    return _sb.storage.from_(BUCKET).get_public_url(path)
 
 
 def load_all():
@@ -66,6 +80,9 @@ def db_insert(rec):
         row = {k: v for k, v in rec.items()}
         row["created_at"] = rec["created_at"].isoformat()
         row["amount"] = rec["amount"] if rec["amount"] != "" else None
+        row.pop("attachment_url", None)
+        if rec.get("attachment_url"):
+            row["attachment_url"] = rec["attachment_url"]
         _sb.table(TABLE).insert(row).execute()
     else:
         records = load_all()
@@ -166,6 +183,7 @@ def submit():
         urgency = request.form.get("urgency", "ปานกลาง")
         work_type = request.form.get("work_type", "OTHER")
         amount = parse_amount(request.form.get("amount", ""))
+        attachment_url = upload_attachment(request.files.get("attachment"))
 
         if not name or not description:
             return render_template("submit.html", error="กรุณากรอกข้อมูลให้ครบถ้วน",
@@ -182,6 +200,7 @@ def submit():
             "status": "รอดำเนินการ",
             "created_at": now,
             "created_at_str": now.strftime("%d/%m/%Y %H:%M"),
+            "attachment_url": attachment_url,
         }
         db_insert(new_request)
         return redirect(url_for("submit_success"))

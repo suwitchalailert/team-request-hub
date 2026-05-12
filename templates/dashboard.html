@@ -207,6 +207,14 @@
       </div>
       {% endif %}
 
+      {% if req.attachment_url %}
+      <div class="mb-2">
+        <a href="{{ req.attachment_url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-paperclip me-1"></i>ดูเอกสารประกอบ
+        </a>
+      </div>
+      {% endif %}
+
       <div class="d-flex align-items-center gap-3 flex-wrap">
         <!-- Status Badge -->
         <span class="fw-semibold status-{{ req.status }}">

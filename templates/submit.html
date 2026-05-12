@@ -13,7 +13,7 @@
         <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ error }}</div>
         {% endif %}
 
-        <form method="POST" action="/submit">
+        <form method="POST" action="/submit" enctype="multipart/form-data">
           <div class="mb-3">
             <label class="form-label fw-semibold">ชื่อผู้ส่งคำขอ <span class="text-danger">*</span></label>
             <input type="text" name="name" class="form-control" placeholder="ระบุชื่อของคุณ" required />
@@ -70,6 +70,13 @@
                 <label class="form-check-label text-danger fw-semibold" for="u-high">สูง</label>
               </div>
             </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">เอกสารประกอบ <span class="text-muted fw-normal">(ไม่บังคับ)</span></label>
+            <input type="file" name="attachment" class="form-control"
+                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+            <div class="form-text">รองรับ PDF, Word, Excel, รูปภาพ — ขนาดไม่เกิน 4 MB</div>
           </div>
 
           <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
