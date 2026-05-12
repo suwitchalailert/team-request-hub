@@ -108,96 +108,110 @@
   </div>
 </div>
 
-<!-- Budget List -->
-<div class="card border-0 shadow-sm">
-  <div class="card-body pb-2">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h6 class="fw-bold text-muted mb-0"><i class="bi bi-grid-3x3-gap me-1"></i>รายการ Budget ที่ตั้งไว้</h6>
-      <div class="d-flex gap-2 align-items-center flex-wrap">
-        <div class="d-flex gap-1 align-items-center">
-          <span class="text-muted small">เรียงตาม:</span>
-          <select id="sortSelect" class="form-select form-select-sm" style="width:auto;">
-            <option value="period">งวด</option>
-            <option value="name">ชื่อ</option>
-            <option value="category">ประเภท</option>
-            <option value="amount">วงเงิน</option>
-          </select>
-          <button id="sortDirBtn" class="btn btn-sm btn-outline-secondary" title="สลับลำดับ">
-            <i class="bi bi-sort-down" id="sortDirIcon"></i>
-          </button>
-        </div>
-        <div class="form-check form-check-inline mb-0">
-          <input type="checkbox" id="checkAll" class="form-check-input" />
-          <label class="form-check-label small text-muted" for="checkAll">เลือกทั้งหมด</label>
-        </div>
-        <button id="bulkDeleteBtn" class="btn btn-sm btn-danger d-none" onclick="bulkDelete()">
-          <i class="bi bi-trash me-1"></i>ลบที่เลือก (<span id="selectedCount">0</span>)
-        </button>
-      </div>
-    </div>
+<!-- Budget Pivot Tables -->
+{% macro pivot_table(label, icon, periods, person_rows, wt_rows) %}
+{% if periods %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body pb-0">
+    <h6 class="fw-bold text-muted mb-3"><i class="bi bi-{{ icon }} me-1"></i>{{ label }}</h6>
   </div>
 
-  {% if budgets %}
-  <div class="card-body pt-0">
-    <div class="row g-2" id="budgetGrid">
-      {% for b in budgets %}
-      <div class="col-6 col-md-4 col-lg-3 budget-card-wrap"
-           data-category="{{ b.category }}"
-           data-name="{{ b.name }}"
-           data-period-type="{{ b.period_type }}"
-           data-period="{{ b.period }}"
-           data-amount="{{ b.budget_amount }}">
-        <div class="card h-100 border shadow-none budget-card position-relative"
-             style="border-color:#dee2e6!important;">
-          <!-- Checkbox overlay -->
-          <div class="position-absolute top-0 start-0 m-1">
-            <input type="checkbox" class="form-check-input row-check" value="{{ b.id }}" />
-          </div>
-          <!-- Delete button overlay -->
-          <div class="position-absolute top-0 end-0 m-1">
-            <button type="button" class="btn btn-sm btn-link text-danger p-0" style="line-height:1;"
-                    onclick="if(confirm('ลบ Budget นี้?')) { fetch('/budget/delete/{{ b.id }}', {method:'POST'}).then(()=>location.reload()); }">
-              <i class="bi bi-x-circle-fill" style="font-size:1rem;"></i>
-            </button>
-          </div>
-          <div class="card-body p-2 pt-3 text-center">
-            {% if b.category == 'person' %}
-            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold mb-1"
-                 style="width:36px;height:36px;font-size:0.9rem;">{{ b.name[0] }}</div>
-            <div class="fw-semibold small text-truncate" title="{{ b.name }}">{{ b.name }}</div>
-            <span class="badge bg-primary" style="font-size:0.65rem;">บุคคล</span>
-            {% else %}
-            <div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center fw-bold mb-1"
-                 style="width:36px;height:36px;font-size:0.75rem;"><i class="bi bi-diagram-3"></i></div>
-            <div class="fw-semibold small text-truncate" title="{{ b.name }}">{{ b.name }}</div>
-            <span class="badge bg-secondary" style="font-size:0.65rem;">ประเภทงาน</span>
-            {% endif %}
-            <div class="mt-2 text-muted" style="font-size:0.7rem;">
-              {{ "รายเดือน" if b.period_type == "monthly" else "รายปี" }} · {{ b.period }}
-            </div>
-            <div class="fw-bold text-success mt-1" style="font-size:0.95rem;">
-              {{ b.budget_amount | fmt_amount }}
-              <span class="text-muted fw-normal" style="font-size:0.65rem;">บาท</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
+  {% if person_rows %}
+  <div class="px-3 pb-1">
+    <small class="text-muted fw-semibold"><i class="bi bi-person-fill me-1"></i>รายบุคคล</small>
   </div>
-  {% else %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle mb-0" style="font-size:0.85rem;">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3" style="min-width:120px;">ชื่อ</th>
+          {% for p in periods %}<th class="text-center" style="min-width:90px;">{{ p }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in person_rows %}
+        <tr>
+          <td class="ps-3 fw-semibold">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold me-1"
+                 style="width:22px;height:22px;font-size:0.7rem;">{{ row.name[0] }}</div>
+            {{ row.name }}
+          </td>
+          {% for p in periods %}
+          {% set cell = row.cells[p] %}
+          <td class="text-center {% if cell %}text-success fw-bold{% else %}text-muted{% endif %}">
+            {% if cell %}
+            {{ cell.budget_amount | fmt_amount }}
+            <button type="button" class="btn btn-link p-0 ms-1 text-danger" style="font-size:0.7rem;vertical-align:middle;"
+                    onclick="if(confirm('ลบ Budget นี้?')) { fetch('/budget/delete/{{ cell.id }}', {method:'POST'}).then(()=>location.reload()); }">
+              <i class="bi bi-x-circle"></i>
+            </button>
+            {% else %}—{% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if wt_rows %}
+  <div class="px-3 pb-1 {% if person_rows %}mt-3{% endif %}">
+    <small class="text-muted fw-semibold"><i class="bi bi-diagram-3 me-1"></i>ประเภทงาน</small>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle mb-0" style="font-size:0.85rem;">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3" style="min-width:120px;">ประเภทงาน</th>
+          {% for p in periods %}<th class="text-center" style="min-width:90px;">{{ p }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in wt_rows %}
+        <tr>
+          <td class="ps-3 fw-semibold">
+            <span class="badge badge-type-{{ row.name }}">{{ row.name }}</span>
+          </td>
+          {% for p in periods %}
+          {% set cell = row.cells[p] %}
+          <td class="text-center {% if cell %}text-success fw-bold{% else %}text-muted{% endif %}">
+            {% if cell %}
+            {{ cell.budget_amount | fmt_amount }}
+            <button type="button" class="btn btn-link p-0 ms-1 text-danger" style="font-size:0.7rem;vertical-align:middle;"
+                    onclick="if(confirm('ลบ Budget นี้?')) { fetch('/budget/delete/{{ cell.id }}', {method:'POST'}).then(()=>location.reload()); }">
+              <i class="bi bi-x-circle"></i>
+            </button>
+            {% else %}—{% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  <div class="pb-1"></div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% if budgets %}
+{{ pivot_table("Budget รายเดือน", "calendar-month", m_periods, m_person, m_wt) }}
+{{ pivot_table("Budget รายปี", "calendar-year", y_periods, y_person, y_wt) }}
+{% else %}
+<div class="card border-0 shadow-sm">
   <div class="card-body text-center text-muted py-4">
     <i class="bi bi-inbox fs-2 d-block mb-2"></i>ยังไม่มี Budget — เพิ่มจากฟอร์มด้านบน
   </div>
-  {% endif %}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
   setupAmountInput(document.getElementById('budgetAmount'));
 
-  // Form controls
   const categorySelect = document.getElementById('categorySelect');
   const personField    = document.getElementById('personField');
   const workTypeField  = document.getElementById('workTypeField');
@@ -228,67 +242,5 @@
     monthInput.disabled = isYear;
     yearInput.disabled = !isYear;
   });
-
-  // Checkbox & bulk delete
-  const checkAll = document.getElementById('checkAll');
-  const bulkBtn  = document.getElementById('bulkDeleteBtn');
-  const countEl  = document.getElementById('selectedCount');
-
-  function updateBulkBtn() {
-    const checked = document.querySelectorAll('.row-check:checked').length;
-    countEl.textContent = checked;
-    bulkBtn.classList.toggle('d-none', checked === 0);
-  }
-
-  if (checkAll) {
-    checkAll.addEventListener('change', () => {
-      document.querySelectorAll('.row-check').forEach(cb => cb.checked = checkAll.checked);
-      updateBulkBtn();
-    });
-    document.querySelectorAll('.row-check').forEach(cb =>
-      cb.addEventListener('change', updateBulkBtn));
-  }
-
-  function bulkDelete() {
-    const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
-    if (!ids.length) return;
-    if (!confirm(`ลบ ${ids.length} รายการที่เลือก?`)) return;
-    Promise.all(ids.map(id => fetch(`/budget/delete/${id}`, {method:'POST'})))
-      .then(() => location.reload());
-  }
-
-  // Card grid sorting
-  let sortAsc = true;
-  const sortSelect  = document.getElementById('sortSelect');
-  const sortDirBtn  = document.getElementById('sortDirBtn');
-  const sortDirIcon = document.getElementById('sortDirIcon');
-  const grid        = document.getElementById('budgetGrid');
-
-  function sortGrid() {
-    if (!grid) return;
-    const col = sortSelect ? sortSelect.value : 'period';
-    const toNum = s => { const p = s.split('/'); return p.length===2 ? p[1]+p[0] : s; };
-    [...grid.querySelectorAll('.budget-card-wrap')].sort((a, b) => {
-      let av = a.dataset[col === 'period_type' ? 'periodType' : col === 'amount' ? 'amount' : col] || '';
-      let bv = b.dataset[col === 'period_type' ? 'periodType' : col === 'amount' ? 'amount' : col] || '';
-      if (col === 'amount') { av = parseFloat(av); bv = parseFloat(bv); }
-      if (col === 'period') { av = toNum(av); bv = toNum(bv); }
-      if (av < bv) return sortAsc ? -1 : 1;
-      if (av > bv) return sortAsc ? 1 : -1;
-      return 0;
-    }).forEach(card => grid.appendChild(card));
-  }
-
-  if (sortSelect) sortSelect.addEventListener('change', sortGrid);
-  if (sortDirBtn) {
-    sortDirBtn.addEventListener('click', () => {
-      sortAsc = !sortAsc;
-      sortDirIcon.className = sortAsc ? 'bi bi-sort-down' : 'bi bi-sort-up';
-      sortGrid();
-    });
-  }
-
-  // Initial sort by period
-  sortGrid();
 </script>
 {% endblock %}

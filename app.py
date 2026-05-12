@@ -314,10 +314,40 @@ def dashboard_person():
 
 @app.route("/budget", methods=["GET", "POST"])
 def budget_manage():
+    from collections import defaultdict
     all_requests = load_all()
     persons = sorted(set(r["name"] for r in all_requests))
     budgets = load_budgets()
-    return render_template("budget.html", budgets=budgets, persons=persons, work_types=WORK_TYPES)
+
+    def period_sort_key(p):
+        parts = p.split("/")
+        return (parts[1], parts[0].zfill(2)) if len(parts) == 2 else (p, "")
+
+    def build_pivot(blist, ptype):
+        periods = sorted(set(b["period"] for b in blist if b["period_type"] == ptype), key=period_sort_key)
+        lookup = defaultdict(dict)
+        for b in blist:
+            if b["period_type"] == ptype:
+                lookup[(b["category"], b["name"])][b["period"]] = b
+        seen, person_rows, wt_rows = set(), [], []
+        for b in sorted(blist, key=lambda x: x["name"]):
+            if b["period_type"] != ptype:
+                continue
+            key = (b["category"], b["name"])
+            if key in seen:
+                continue
+            seen.add(key)
+            row = {"name": b["name"], "category": b["category"],
+                   "cells": {p: lookup[key].get(p) for p in periods}}
+            (person_rows if b["category"] == "person" else wt_rows).append(row)
+        return periods, person_rows, wt_rows
+
+    m_periods, m_person, m_wt = build_pivot(budgets, "monthly")
+    y_periods, y_person, y_wt = build_pivot(budgets, "yearly")
+
+    return render_template("budget.html", budgets=budgets, persons=persons, work_types=WORK_TYPES,
+                           m_periods=m_periods, m_person=m_person, m_wt=m_wt,
+                           y_periods=y_periods, y_person=y_person, y_wt=y_wt)
 
 
 @app.route("/budget/add", methods=["POST"])
