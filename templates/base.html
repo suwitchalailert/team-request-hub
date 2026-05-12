@@ -16,6 +16,8 @@
     .badge-type-IT     { background: #0dcaf0; color: #000; }
     .badge-type-OFFICE { background: #ffc107; color: #000; }
     .badge-type-OTHER  { background: #6c757d; color: #fff; }
+    .badge-type-PERSON { background: #6f42c1; color: #fff; }
+    .bg-purple { background-color: #6f42c1 !important; }
     .status-รอดำเนินการ { color: #6c757d; }
     .status-กำลังทำ     { color: #0d6efd; }
     .status-เสร็จแล้ว   { color: #198754; }
@@ -26,7 +28,11 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container">
       <a class="navbar-brand" href="/"><i class="bi bi-inbox-fill me-2"></i>Team Request Hub</a>
-      <div class="collapse navbar-collapse">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"
+              aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
             <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">

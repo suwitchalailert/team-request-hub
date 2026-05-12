@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 URGENCY_ORDER = {"สูง": 0, "ปานกลาง": 1, "ต่ำ": 2}
 STATUS_OPTIONS = ["รอดำเนินการ", "กำลังทำ", "เสร็จแล้ว", "ยกเลิก"]
-WORK_TYPES = ["IT", "OFFICE", "OTHER"]
+WORK_TYPES = ["IT", "OFFICE", "OTHER", "PERSON"]
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")

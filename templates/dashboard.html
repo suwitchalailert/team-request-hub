@@ -47,7 +47,8 @@
   {% set wt_meta = {
     'IT':     {'icon': 'bi-pc-display',  'color': 'info',    'text': 'dark'},
     'OFFICE': {'icon': 'bi-building',    'color': 'warning', 'text': 'dark'},
-    'OTHER':  {'icon': 'bi-three-dots',  'color': 'secondary','text': 'white'}
+    'OTHER':  {'icon': 'bi-three-dots',  'color': 'secondary','text': 'white'},
+    'PERSON': {'icon': 'bi-person-fill', 'color': 'purple',  'text': 'white'}
   } %}
   {% for wt in work_types %}
   {% set s = work_type_stats[wt] %}
@@ -126,6 +127,7 @@
       <button class="nav-link py-1 px-3" data-type="{{ wt }}">
         {% if wt == 'IT' %}<i class="bi bi-pc-display me-1"></i>
         {% elif wt == 'OFFICE' %}<i class="bi bi-building me-1"></i>
+        {% elif wt == 'PERSON' %}<i class="bi bi-person-fill me-1"></i>
         {% else %}<i class="bi bi-three-dots me-1"></i>
         {% endif %}{{ wt }}
       </button>
@@ -176,6 +178,7 @@
           <span class="badge badge-type-{{ req.work_type }} me-2">
             {% if req.work_type == 'IT' %}<i class="bi bi-pc-display me-1"></i>
             {% elif req.work_type == 'OFFICE' %}<i class="bi bi-building me-1"></i>
+            {% elif req.work_type == 'PERSON' %}<i class="bi bi-person-fill me-1"></i>
             {% else %}<i class="bi bi-three-dots me-1"></i>
             {% endif %}{{ req.work_type }}
           </span>
